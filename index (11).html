@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AV Clubs — Club Assignment Tracker</title>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --card: #fff;
+    --border: #e0e3e8;
+    --accent: #2563eb;
+    --red: #dc2626;
+    --red-bg: #fef2f2;
+    --green: #16a34a;
+    --green-bg: #f0fdf4;
+    --yellow: #ca8a04;
+    --yellow-bg: #fefce8;
+    --gray: #64748b;
+    --text: #1e293b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 20px; max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; margin-bottom: 4px; }
+  .subtitle { color: var(--gray); font-size: 0.9rem; margin-bottom: 20px; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
+  .toolbar button, .toolbar select { padding: 6px 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); cursor: pointer; font-size: 0.85rem; }
+  .toolbar button:hover { background: #f1f5f9; }
+  .toolbar select { appearance: auto; }
+  .filter-label { font-size: 0.85rem; color: var(--gray); }
+  .club-section { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
+  .club-header { display: flex; align-items: center; padding: 14px 18px; cursor: pointer; user-select: none; }
+  .club-header:hover { background: #f8fafc; }
+  .club-reorder { display: flex; flex-direction: column; margin-right: 10px; gap: 1px; }
+  .club-reorder button { background: none; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; padding: 0 5px; font-size: 0.7rem; line-height: 1.3; color: var(--gray); transition: all 0.15s; }
+  .club-reorder button:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .club-reorder button:disabled { opacity: 0.25; cursor: default; background: none; color: var(--gray); border-color: var(--border); }
+  .club-title { font-weight: 700; font-size: 1.05rem; }
+  .club-meta { font-size: 0.8rem; color: var(--gray); }
+  .club-progress { font-size: 0.8rem; color: var(--gray); margin-left: auto; margin-right: 12px; }
+  .chevron { transition: transform 0.2s; font-size: 1.1rem; color: var(--gray); }
+  .chevron.collapsed { transform: rotate(-90deg); }
+  .club-body { border-top: 1px solid var(--border); }
+  .club-body.hidden { display: none; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { background: #f8fafc; text-align: left; padding: 8px 12px; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; color: var(--gray); letter-spacing: 0.03em; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 12px; border-bottom: 1px solid #f1f3f5; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr.done { background: var(--green-bg); }
+  tr.done .assignment-name, tr.done .assignment-desc { text-decoration: line-through; color: var(--gray); }
+  .check-col { width: 36px; text-align: center; }
+  input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); }
+  .assignment-name { font-weight: 600; }
+  .assignment-desc { font-size: 0.78rem; color: var(--gray); margin-top: 2px; }
+  .editable { border: 1px solid transparent; border-radius: 4px; padding: 2px 6px; min-width: 60px; cursor: text; transition: border-color 0.15s; }
+  .editable:hover { border-color: var(--border); }
+  .editable:focus { border-color: var(--accent); outline: none; background: #f8fafc; }
+  select.status-select { border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; font-size: 0.82rem; background: var(--card); cursor: pointer; }
+  select.status-select.not-started { color: var(--gray); }
+  select.status-select.in-progress { color: var(--yellow); }
+  select.status-select.done { color: var(--green); }
+  .notes-cell { min-width: 120px; }
+  .notes-input { width: 100%; border: 1px solid transparent; border-radius: 4px; padding: 2px 6px; font-size: 0.82rem; font-family: inherit; resize: vertical; min-height: 24px; cursor: text; transition: border-color 0.15s; }
+  .notes-input:hover { border-color: var(--border); }
+  .notes-input:focus { border-color: var(--accent); outline: none; background: #f8fafc; }
+  .due-date { white-space: nowrap; font-size: 0.82rem; }
+  .overdue { color: var(--red); font-weight: 600; }
+  .add-row-btn { display: block; width: 100%; padding: 8px; border: none; background: #f8fafc; color: var(--accent); cursor: pointer; font-size: 0.85rem; border-top: 1px solid var(--border); }
+  .add-row-btn:hover { background: #eff6ff; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+  .modal { background: var(--card); border-radius: 12px; padding: 24px; width: 380px; max-width: 90vw; box-shadow: 0 8px 30px rgba(0,0,0,0.15); }
+  .modal h3 { margin-bottom: 16px; font-size: 1rem; }
+  .modal label { display: block; font-size: 0.85rem; margin-bottom: 6px; color: var(--gray); }
+  .modal input[type="text"], .modal input[type="date"] { width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; margin-bottom: 12px; }
+  .modal-btns { display: flex; gap: 8px; margin-top: 16px; }
+  .modal-btns button { flex: 1; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; font-size: 0.85rem; }
+  .modal-btns .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .modal-btns .btn-primary:hover { opacity: 0.9; }
+  .modal-btns .btn-all { background: #f0fdf4; color: var(--green); border-color: var(--green); }
+  .modal-btns .btn-all:hover { opacity: 0.9; }
+  .modal-btns .btn-cancel { background: var(--card); }
+  .drag-col { width: 28px; text-align: center; vertical-align: middle; }
+  .drag-handle { cursor: grab; color: #c0c7d0; font-size: 1.1rem; padding: 4px 2px; user-select: none; display: inline-flex; flex-direction: column; align-items: center; line-height: 1; letter-spacing: 2px; transition: color 0.15s; }
+  .drag-handle:hover { color: var(--accent); }
+  .drag-handle:active { cursor: grabbing; }
+  tr.dragging { opacity: 0.4; background: #e0e7ff !important; }
+  tr.drag-over-above { box-shadow: 0 -3px 0 0 var(--accent) inset; }
+  tr.drag-over-below { box-shadow: 0 3px 0 0 var(--accent) inset; }
+  .drop-indicator { height: 3px; background: var(--accent); border-radius: 2px; }
+  .delete-btn { background: none; border: none; color: #cbd5e1; cursor: pointer; font-size: 1rem; padding: 0 4px; }
+  .delete-btn:hover { color: var(--red); }
+  .staffing-grid { margin-bottom: 24px; }
+  .staffing-grid table { font-size: 0.82rem; }
+  .staffing-grid th { font-size: 0.75rem; }
+  .needs-staff { color: var(--red); font-weight: 600; }
+  .key-docs { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
+  .key-docs-title { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray); font-weight: 700; margin-bottom: 8px; }
+  .key-docs-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .key-doc { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: #f8fafc; text-decoration: none; color: var(--text); font-size: 0.85rem; transition: all 0.15s; }
+  .key-doc:hover { border-color: var(--accent); background: #eff6ff; color: var(--accent); }
+  .key-doc-icon { font-size: 1.1rem; }
+  .key-doc-meta { font-size: 0.72rem; color: var(--gray); }
+  .legend { font-size: 0.8rem; color: var(--gray); margin-bottom: 16px; }
+  .legend span { margin-right: 16px; }
+  .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  body.view-mode #app input,
+  body.view-mode #app select,
+  body.view-mode #app textarea,
+  body.view-mode #app .editable { pointer-events: none; background: #f8fafc; color: #475569; }
+  body.view-mode #app .add-row-btn,
+  body.view-mode #app .delete-btn,
+  body.view-mode #app .club-reorder,
+  body.view-mode .edit-only { display: none !important; }
+  body.view-mode #app [draggable] { -webkit-user-drag: none; }
+  .auth-pill { margin-left: 8px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: #fff; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 8px; }
+  .auth-pill button { padding: 2px 8px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; background: #fff; cursor: pointer; }
+  .view-banner { background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; padding: 8px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 0.85rem; }
+  @media print {
+    .toolbar, .add-row-btn, .delete-btn { display: none !important; }
+    body { padding: 0; }
+    .club-body.hidden { display: block !important; }
+  }
+  @media (max-width: 768px) {
+    body { padding: 10px; }
+    table { font-size: 0.78rem; }
+    td, th { padding: 6px 8px; }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<h1>AV Clubs — Club Assignment Tracker</h1>
+<p class="subtitle">13 Clubs &middot; Apr 6 – Aug 31, 2026 &middot; Fill in RP and status as assignments are made</p>
+
+<div class="key-docs">
+  <div class="key-docs-title">📚 Key Documents</div>
+  <div class="key-docs-list">
+    <a class="key-doc" href="./docs/AV-Clubs-Playbook-V1.docx" download>
+      <span class="key-doc-icon">📘</span>
+      <span>
+        <div><strong>AV Clubs Playbook V1</strong></div>
+        <div class="key-doc-meta">DOCX · The full lifecycle manual</div>
+      </span>
+    </a>
+  </div>
+</div>
+
+<div class="legend">
+  <span><span class="dot" style="background:var(--green)"></span> Complete</span>
+  <span><span class="dot" style="background:var(--yellow)"></span> In Progress</span>
+</div>
+
+<div class="toolbar">
+  <span class="filter-label">Filter:</span>
+  <select id="filterSelect">
+    <option value="all">All Items</option>
+    <option value="incomplete">Incomplete Only</option>
+    <option value="overdue">Overdue Only</option>
+  </select>
+  <span class="filter-label" style="margin-left:8px;">Club:</span>
+  <select id="clubFilter">
+    <option value="all">All Clubs</option>
+  </select>
+  <div style="flex:1"></div>
+  <button class="edit-only" onclick="addClub()" style="background:#0f766e;color:#fff;border-color:#0f766e;font-weight:600">+ Add Club</button>
+  <button id="archivedBtn" onclick="toggleArchivedView()">Archived (0)</button>
+  <span id="authPill" class="auth-pill">…</span>
+  <button onclick="expandAll()">Expand All</button>
+  <button onclick="collapseAll()">Collapse All</button>
+  <button onclick="exportData()">Export JSON</button>
+  <button onclick="document.getElementById('importInput').click()">Import JSON</button>
+  <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)">
+  <button onclick="showReportModal()" style="background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600">Generate Report (PDF)</button>
+  <button onclick="showSuggestModal()" title="Submit a suggestion or bug report">💡 Suggest</button>
+  <button class="edit-only" id="viewSuggestionsBtn" onclick="showSuggestionsListModal()">View Suggestions <span id="suggestionsBadge" style="display:none;background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:0.72rem;font-weight:700;margin-left:4px;"></span></button>
+</div>
+
+<div id="app"></div>
+
+<script>
+// --- Supabase Setup ---
+const SUPABASE_URL = 'https://bcqmkuyzaaxpacjmpygv.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjcW1rdXl6YWF4cGFjam1weWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1MDAzNzksImV4cCI6MjA5MTA3NjM3OX0.g8YLbc_LVVYQ3S9d7v66gePTkXpj6nT7eNy6ZJ9kNBw';
+let db = null;
+try {
+  if (window.supabase && window.supabase.createClient) {
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  } else {
+    console.warn('Supabase JS library not loaded — running in offline mode');
+  }
+} catch (err) {
+  console.error('Failed to initialize Supabase client:', err);
+}
+
+const DEFAULT_CLUBS = [
+  {
+    id: 1, name: "Deep Tech Club", type: "Sector",
+    materialsDate: "Apr 6", firstMeeting: "Jun 8",
+    assignments: [
+      { name: "Recruiting Manager", desc: "Owns recruiting pipeline, runs outreach, sets culture", status: "Not started", rp: "Matt Caspari & Rupika Brito", due: "Pre-launch", done: false, notes: "" },
+      { name: "Deal Manager", desc: "Owns investment thesis, runs deal drops and meeting content", status: "Not started", rp: "Matt Caspari & Rupika Brito", due: "Pre-launch", notes: "", done: false },
+      { name: "Prospect List (30+)", desc: "Named list of 30+ targets to hit 15-25 members", status: "Not started", rp: "", due: "Pre-launch", notes: "", done: false },
+      { name: "Typeform / Application", desc: "Screening form live and linked from landing page", status: "Not started", rp: "", due: "2026-04-13", notes: "", done: false },
+      { name: "One-Pager", desc: "Club PDF pitch (thesis, structure, value prop)", status: "Not started", rp: "", due: "2026-04-13", notes: "", done: false },
+      { name: "Representative Deals", desc: "Sample deal sheet for the club", status: "Not started", rp: "", due: "2026-04-13", notes: "", done: false },
+      { name: "Landing Page", desc: "Public page with application link", status: "Not started", rp: "", due: "2026-04-13", notes: "", done: false },
+      { name: "Pipeline Tracker", desc: "Set up in Member Portal — prospect, source, status, last touch", status: "Not started", rp: "", due: "2026-04-20", notes: "", done: false },
+      { name: "Outreach Templates", desc: "Cold intro, warm intro, follow-up, referral ask emails", status: "Not started", rp: "", due: "2026-04-13", notes: "", done: false }
+    ]
+  },
+  {
+    id: 2, name: "Nuclear & Energy Tech", type: "Sector",
+    materialsDate: "Apr 13", firstMeeting: "Jun 15",
+    assignments: [
+      { name: "Recruiting Manager", desc: "Owns recruiting pipeline, runs outreach, sets culture", status: "Not started", rp: "Drew Wandzilak & Mason Hale", due: "Pre-launch", done: false, notes: "" },
+      { name: "Deal Manager", desc: "Owns investment thesis, runs deal drops and meeting content", status: "Not started", rp: "Drew Wandzilak & Mason Hale", due: "Pre-launch", notes: "", done: false },
+      { name: "Prospect List (30+)", desc: "Named list of 30+ targets to hit 15-25 members", status: "Not started", rp: "", due: "Pre-launch", notes: "", done: false },
+      { name: "Typeform / Application", desc: "Screening form live and linked from landing page", status: "Not started", rp: "", due: "2026-04-20", notes: "", done: false },
+      { name: "One-Pager", desc: "Club PDF pitch (thesis, structure, value prop)", status: "Not started", rp: "", due: "2026-04-20", notes: "", done: false },
+      { name: "Representative Deals", desc: "Sample deal sheet for the club", status: "Not started", rp: "", due: "2026-04-20", notes: "", done: false },
+      { name: "Landing Page", desc: "Public page with application link", status: "Not started", rp: "", due: "2026-04-20", notes: "", done: false },
+      { name: "Pipeline Tracker", desc: "Set up in Member Portal — prospect, source, status, last touch", status: "Not started", rp: "", due: "2026-04-27", notes: "", done: false },
+      { name: "Outreach Templates", desc: "Cold intro, warm intro, follow-up, referral ask emails", status: "Not started", rp: "", due: "2026-04-20", notes: "", done: false }
+    ]
+  },
+  {
+    id: 3, name: "Doctors & Health Tech", type: "Identity+Sector",
+    materialsDate: "Apr 20", firstMeeting: "Jun 22",
+    assignments: [
+      { name: "Recruiting Manager", desc: "Owns recruiting pipeline, runs outreach, sets culture", status: "Not started", rp: "Mike Peri & David Shapiro", due: "Pre-launch", done: false, notes: "" },
+      { name: "Deal Manager", desc: "Owns investment thesis, runs deal drops and meeting content", status: "Not started", rp: "Mike Peri & David Shapiro", due: "Pre-launch", notes: "", done: false },
+      { name: "Prospect List (30+)", desc: "Named list of 30+ targets to hit 15-25 members", status: "Not started", rp: "", due: "Pre-launch", notes: "", done: false },
+      { name: "Typeform / Application", desc: "Screening form live and linked from landing page", status: "Not started", rp: "", due: "2026-04-27", notes: "", done: false },
+      { name: "One-Pager", desc: "Club PDF pitch (thesis, structure, value prop)", status: "Not started", rp: "", due: "2026-04-27", notes: "", done: false },
+      { name: "Representative Deals", desc: "Sample deal sheet for the club", status: "Not started", rp: "", due: "2026-04-27", notes: "", done: false },
+      { name: "Landing Page", desc: "Public page with application link", status: "Not started", rp: "", due: "2026-04-27", notes: "", done: false },
+      { name: "Pipeline Tracker", desc: "Set up in Member Portal — prospect, source, status, last touch", status: "Not started", rp: "", due: "2026-05-04", notes: "", done: false },
+      { name: "Outreach Templates", desc: "Cold intro, warm intro, follow-up, referral ask emails", status: "Not started", rp: "", due: "2026-04-27", notes: "", done: false }
+    ]
+  },
+  {
+    id: 4, name: "Maritime", type: "Niche Sector",
+    materialsDate: "Apr 27", firstMeeting: "Jun 29",
+    assignments: [
+      { name: "Recruiting Manager", desc: "Owns recruiting pipeline, runs outreach, sets culture", status: "Not started", rp: "Ryan Musto & Clare Brandfonbrener", due: "Pre-launch", done: false, notes: "" },
+      { name: "Deal Manager", desc: "Owns investment thesis, runs deal drops and meeting content", status: "Not started", rp: "Ryan Musto & Clare Brandfonbrener", due: "Pre-launch", notes: "", done: false },
+      { name: "Prospect List (30+)", desc: "Named list of 30+ targets to hit 15-25 members", status: "Not started", rp: "", due: "Pre-launch", notes: "", done: false },
+      { name: "Typeform / Application", desc: "Screening form live and linked from landing page", status: "Not started", rp: "", due: "2026-05-04", notes: "", done: false },
+      { name: "One-Pager", desc: "Club PDF pitch (thesis, structure, value prop)", status: "Not started", rp: "", due: "2026-05-04", notes: "", done: false },
+      { name: "Representative Deals", desc: "Sample deal sheet for the club", status: "Not started", rp: "", due: "2026-05-04", notes: "", done: false },
+      { name: "Landing Page", desc: "Public page with application link", status: "Not started", rp: "", due: "2026-05-04", notes: "", done: false },
+      { name: "Pipeline Tracker", desc: "Set up in Member Portal — prospect, source, status, last touch", status: "Not started", rp: "", due: "2026-05-11", notes: "", done: false },
+      { name: "Outreach Templates", desc: "Cold intro, warm intro, follow-up, referral ask emails", status: "Not started", rp: "", due: "2026-05-04", notes: "", done: false }
+    ]
+  },
+  {
+    id: 5, name: "Physical AI", type: "Sector",
+    materialsDate: "May 4", firstMeeting: "Jul 6",
+    assignments: [
+      { name: "Recruiting Manager", desc: "Owns recruiting pipeline, runs outreach, sets culture", status: "Not started", rp: "Jack Staza & Mason Hale", due: "Pre-launch", done: false, notes: "" },
+      { name: "Deal Manager", desc: "Owns investment thesis, runs deal drops and meeting content", status: "Not started", rp: "Jack Staza & Mason Hale", due: "Pre-launch", notes: "", done: false },
+      { name: "Prospect List (30+)", desc: "Named list of 30+ targets to hit 15-25 members", status: "Not started", rp: "", due: "Pre-launch", notes: "", done: false },
+      { name: "Typeform / Application", desc: "Screening form live and linked from landing page", status: "Not started", rp: "", due: "2026-05-11", notes: "", done: false },
+      { name: "One-Pager", desc: "Club PDF pitch (thesis, structure, value prop)", status: "Not started", rp: "", due: "2026-05-11", notes: "", done: false },
+      { name: "Representative Deals", desc: "Sample deal sheet for the club", status: "Not started", rp: "", due: "2026-05-11", notes: "", done: false },
+      { name: "Landing Page", desc: "Public page with application link", status: "Not started", rp: "", due: "2026-05-11", notes: "", done: false },
+      { name: "Pipeline Tracker", desc: "Set up in Member Portal — prospect, source, status, last touch", status: "Not started", rp: "", due: "2026-05-18", notes: "", done: false },
+      { name: "Outreach Templates", desc: "Cold intro, warm intro, follow-up, referral ask emails", status: "Not started", rp: "", due: "2026-05-11", notes: "", done: false }
+    ]
+  },
+  {
+    id: 6, name: "Aussie Expats", type: "Geo/Identity",
+    materialsDate: "May 11", firstMeeting: "Jul 13",
+    assignments: [
+      { name: "Recruiting Manager", desc: "Owns recruiting pipeline, runs outreach, sets culture", status: "Not started", rp: "Travis McKenzie", due: "Pre-launch", done: false, notes: "" },
+      { name: "Deal Manager", desc: "Owns investment thesis, runs deal drops and meeting content", status: "Not started", rp: "Mark Edwards", due: "Pre-launch", notes: "", done: false },
+      { name: "Prospect List (30+)", desc: "Named list of 30+ targets to hit 15-25 members", status: "Not started", rp: "", due: "Pre-launch", notes: "", done: false },
+      { name: "Typeform / Application", desc: "Screening form live and linked from landing page", status: "Not started", rp: "", due: "2026-05-18", notes: "", done: false },
+      { name: "One-Pager", desc: "Club PDF pitch (thesis, structure, value prop)", status: "Not started", rp: "", due: "2026-05-18", notes: "", done: false },
+      { name: "Representative Deals", desc: "Sample deal sheet for the club", status: "Not started", rp: "", due: "2026-05-18", notes: "", done: false },
+      { name: "Landing Page", desc: "Public page with application link", status: "Not started", rp: "", due: "2026-05-18", notes: "", done: false },
+      { name: "Pipeline Tracker", desc: "Set up in Member Portal — prospect, source, status, last touch", status: "Not started", rp: "", due: "2026-05-25", notes: "", done: false },
+      { name: "Outreach Templates", desc: "Cold intro, warm intro, follow-up, referral ask emails", status: "Not started", rp: "", due: "2026-05-18", notes: "", done: false }
+    ]
+  },
+  {
+    id: 7, name: "London Expats", type: "Geo/Identity",
+    materialsDate: "May 18", firstMeeting: "Jul 20",
+    assignments: [
+      { name: "Recruiting Manager", desc: "Owns recruiting pipeline, runs outreach, sets culture", status: "Not started", rp: "Colin Van Ostern", due: "Pre-launch", done: false, notes: "" },
+      { name: "Deal Manager", desc: "Owns investment thesis, runs deal drops and meeting content", status: "Not started", rp: "Drew Wandzilak", due: "Pre-launch", notes: "", done: false },
+      { name: "Prospect List (30+)", desc: "Named list of 30+ targets to hit 15-25 members", status: "Not started", rp: "", due: "Pre-launch", notes: "", done: false },
+      { name: "Typeform / Application", desc: "Screening form live and linked from landing page", status: "Not started", rp: "", due: "2026-05-25", notes: "", done: false },
+      { name: "One-Pager", desc: "Club PDF pitch (thesis, structure, value prop)", status: "Not started", rp: "", due: "2026-05-25", notes: "", done: false },
+      { name: "Representative Deals", desc: "Sample deal sheet for the club", status: "Not started", rp: "", due: "2026-05-25", notes: "", done: false },
+      { name: "Landing Page", desc: "Public page with application link", status: "Not started", rp: "", due: "2026-05-25", notes: "", done: false },
+      { name: "Pipeline Tracker", desc: "Set up in Member Portal — prospect, source, status, last touch", status: "Not started", rp: "", due: "2026-06-01", notes: "", done: false },
+      { name: "Outreach Templates", desc: "Cold intro, warm intro, follow-up, referral ask emails", status: "Not started", rp: "", due: "2026-05-25", notes: "", done: false }
+    ]
+  },
+  {
+    id: 8, name: "Israel Tech", type: "Geo/Sector",
+    materialsDate: "May 25", firstMeeting: "Jul 27",
+    assignments: [
+      { name: "Recruiting Manager", desc: "Owns recruiting pipeline, runs outreach, sets culture", status: "Not started", rp: "Yev Gelfand", due: "Pre-launch", done: false, notes: "" },
+      { name: "Deal Manager", desc: "Owns investment thesis, runs deal drops and meeting content", status: "Not started", rp: "Yev Gelfand", due: "Pre-launch", notes: "", done: false },
+      { name: "Prospect List (30+)", desc: "Named list of 30+ targets to hit 15-25 members", status: "Not started", rp: "", due: "Pre-launch", notes: "", done: false },
+      { name: "Typeform / Application", desc: "Screening form live and linked from landing page", status: "Not started", rp: "", due: "2026-06-01", notes: "", done: false },
+      { name: "One-Pager", desc: "Club PDF pitch (thesis, structure, value prop)", status: "Not started", rp: "", due: "2026-06-01", notes: "", done: false },
+      { name: "Representative Deals", desc: "Sample deal sheet for the club", status: "Not started", rp: "", due: "2026-06-01", notes: "", done: false },
+      { name: "Landing Page", desc: "Public page with application link", status: "Not started", rp: "", due: "2026-06-01", notes: "", done: false },
+      { name: "Pipeline Tracker", desc: "Set up in Member Portal — prospect, source, status, last touch", status: "Not started", rp: "", due: "2026-06-08", notes: "", done: false },
+      { name: "Outreach Templates", desc: "Cold intro, warm intro, follow-up, referral ask emails", status: "Not started", rp: "", due: "2026-06-01", notes: "", done: false }
+    ]
+  },
+  {
+    id: 9, name: "Defense Tech", type: "Sector",
+    materialsDate: "Jun 1", firstMeeting: "Aug 3",
+    assignments: [
+      { name: "Recruiting Manager", desc: "Owns recruiting pipeline, runs outreach, sets culture", status: "Not started", rp: "TBD", due: "Pre-launch", done: false, notes: "" },
+      { name: "Deal Manager", desc: "Owns investment thesis, runs deal drops and meeting content", status: "Not started", rp: "TBD", due: "Pre-launch", notes: "", done: false },
+      { name: "Prospect List (30+)", desc: "Named list of 30+ targets to hit 15-25 members", status: "Not started", rp: "", due: "Pre-launch", notes: "", done: false },
+      { name: "Typeform / Application", desc: "Screening form live and linked from landing page", status: "Not started", rp: "", due: "2026-06-08", notes: "", done: false },
+      { name: "One-Pager", desc: "Club PDF pitch (thesis, structure, value prop)", status: "Not started", rp: "", due: "2026-06-08", notes: "", done: false },
+      { name: "Representative Deals", desc: "Sample deal sheet for the club", status: "Not started", rp: "", due: "2026-06-08", notes: "", done: false },
+      { name: "Landing Page", desc: "Public page with application link", status: "Not started", rp: "", due: "2026-06-08", notes: "", done: false },
+      { name: "Pipeline Tracker", desc: "Set up in Member Portal — prospect, source, status, last touch", status: "Not started", rp: "", due: "2026-06-15", notes: "", done: false },
+      { name: "Outreach Templates", desc: "Cold intro, warm intro, follow-up, referral ask emails", status: "Not started", rp: "", due: "2026-06-08", notes: "", done: false }
+    ]
+  },
+  {
+    id: 10, name: "Tokyo Expats", type: "Geo/Identity",
+    materialsDate: "Jun 8", firstMeeting: "Aug 10",
+    assignments: [
+      { name: "Recruiting Manager", desc: "Owns recruiting pipeline, runs outreach, sets culture", status: "Not started", rp: "Michael Phillips & Michael Collins", due: "Pre-launch", done: false, notes: "" },
+      { name: "Deal Manager", desc: "Owns investment thesis, runs deal drops and meeting content", status: "Not started", rp: "Michael Phillips & Michael Collins", due: "Pre-launch", notes: "", done: false },
+      { name: "Prospect List (30+)", desc: "Named list of 30+ targets to hit 15-25 members", status: "Not started", rp: "", due: "Pre-launch", notes: "", done: false },
+      { name: "Typeform / Application", desc: "Screening form live and linked from landing page", status: "Not started", rp: "", due: "2026-06-15", notes: "", done: false },
+      { name: "One-Pager", desc: "Club PDF pitch (thesis, structure, value prop)", status: "Not started", rp: "", due: "2026-06-15", notes: "", done: false },
+      { name: "Representative Deals", desc: "Sample deal sheet for the club", status: "Not started", rp: "", due: "2026-06-15", notes: "", done: false },
+      { name: "Landing Page", desc: "Public page with application link", status: "Not started", rp: "", due: "2026-06-15", notes: "", done: false },
+      { name: "Pipeline Tracker", desc: "Set up in Member Portal — prospect, source, status, last touch", status: "Not started", rp: "", due: "2026-06-22", notes: "", done: false },
+      { name: "Outreach Templates", desc: "Cold intro, warm intro, follow-up, referral ask emails", status: "Not started", rp: "", due: "2026-06-15", notes: "", done: false }
+    ]
+  },
+  {
+    id: 11, name: "GCs / Lawyers", type: "Identity",
+    materialsDate: "Jun 15", firstMeeting: "Aug 17",
+    assignments: [
+      { name: "Recruiting Manager", desc: "Owns recruiting pipeline, runs outreach, sets culture", status: "Not started", rp: "Chris Browne & Andy Irvin", due: "Pre-launch", done: false, notes: "" },
+      { name: "Deal Manager", desc: "Owns investment thesis, runs deal drops and meeting content", status: "Not started", rp: "Chris Browne & Andy Irvin", due: "Pre-launch", notes: "", done: false },
+      { name: "Prospect List (30+)", desc: "Named list of 30+ targets to hit 15-25 members", status: "Not started", rp: "", due: "Pre-launch", notes: "", done: false },
+      { name: "Typeform / Application", desc: "Screening form live and linked from landing page", status: "Not started", rp: "", due: "2026-06-22", notes: "", done: false },
+      { name: "One-Pager", desc: "Club PDF pitch (thesis, structure, value prop)", status: "Not started", rp: "", due: "2026-06-22", notes: "", done: false },
+      { name: "Representative Deals", desc: "Sample deal sheet for the club", status: "Not started", rp: "", due: "2026-06-22", notes: "", done: false },
+      { name: "Landing Page", desc: "Public page with application link", status: "Not started", rp: "", due: "2026-06-22", notes: "", done: false },
+      { name: "Pipeline Tracker", desc: "Set up in Member Portal — prospect, source, status, last touch", status: "Not started", rp: "", due: "2026-06-29", notes: "", done: false },
+      { name: "Outreach Templates", desc: "Cold intro, warm intro, follow-up, referral ask emails", status: "Not started", rp: "", due: "2026-06-22", notes: "", done: false }
+    ]
+  },
+  {
+    id: 12, name: "Next Gen 3", type: "TBD",
+    materialsDate: "Jun 22", firstMeeting: "Aug 24",
+    assignments: [
+      { name: "Recruiting Manager", desc: "Owns recruiting pipeline, runs outreach, sets culture", status: "Not started", rp: "TBD", due: "Pre-launch", done: false, notes: "" },
+      { name: "Deal Manager", desc: "Owns investment thesis, runs deal drops and meeting content", status: "Not started", rp: "TBD", due: "Pre-launch", notes: "", done: false },
+      { name: "Prospect List (30+)", desc: "Named list of 30+ targets to hit 15-25 members", status: "Not started", rp: "", due: "Pre-launch", notes: "", done: false },
+      { name: "Typeform / Application", desc: "Screening form live and linked from landing page", status: "Not started", rp: "", due: "2026-06-29", notes: "", done: false },
+      { name: "One-Pager", desc: "Club PDF pitch (thesis, structure, value prop)", status: "Not started", rp: "", due: "2026-06-29", notes: "", done: false },
+      { name: "Representative Deals", desc: "Sample deal sheet for the club", status: "Not started", rp: "", due: "2026-06-29", notes: "", done: false },
+      { name: "Landing Page", desc: "Public page with application link", status: "Not started", rp: "", due: "2026-06-29", notes: "", done: false },
+      { name: "Pipeline Tracker", desc: "Set up in Member Portal — prospect, source, status, last touch", status: "Not started", rp: "", due: "2026-07-06", notes: "", done: false },
+      { name: "Outreach Templates", desc: "Cold intro, warm intro, follow-up, referral ask emails", status: "Not started", rp: "", due: "2026-06-29", notes: "", done: false }
+    ]
+  },
+  {
+    id: 13, name: "AI First Ventures", type: "Sector",
+    materialsDate: "Jun 29", firstMeeting: "Aug 31",
+    assignments: [
+      { name: "Recruiting Manager", desc: "Owns recruiting pipeline, runs outreach, sets culture", status: "Not started", rp: "Sophia Zhao & Jack Stanza", due: "Pre-launch", done: false, notes: "" },
+      { name: "Deal Manager", desc: "Owns investment thesis, runs deal drops and meeting content", status: "Not started", rp: "Sophia Zhao & Jack Stanza", due: "Pre-launch", notes: "", done: false },
+      { name: "Prospect List (30+)", desc: "Named list of 30+ targets to hit 15-25 members", status: "Not started", rp: "", due: "Pre-launch", notes: "", done: false },
+      { name: "Typeform / Application", desc: "Screening form live and linked from landing page", status: "Not started", rp: "", due: "2026-07-06", notes: "", done: false },
+      { name: "One-Pager", desc: "Club PDF pitch (thesis, structure, value prop)", status: "Not started", rp: "", due: "2026-07-06", notes: "", done: false },
+      { name: "Representative Deals", desc: "Sample deal sheet for the club", status: "Not started", rp: "", due: "2026-07-06", notes: "", done: false },
+      { name: "Landing Page", desc: "Public page with application link", status: "Not started", rp: "", due: "2026-07-06", notes: "", done: false },
+      { name: "Pipeline Tracker", desc: "Set up in Member Portal — prospect, source, status, last touch", status: "Not started", rp: "", due: "2026-07-13", notes: "", done: false },
+      { name: "Outreach Templates", desc: "Cold intro, warm intro, follow-up, referral ask emails", status: "Not started", rp: "", due: "2026-07-06", notes: "", done: false }
+    ]
+  }
+];
+
+// --- Supabase Data Functions ---
+
+// Map a DB assignment row to the JS object format
+function mapAssignmentFromDb(row) {
+  return {
+    dbId: row.id,
+    name: row.name || '',
+    desc: row.description || '',
+    status: row.status || 'Not started',
+    rp: row.rp || '',
+    due: row.due || '',
+    done: !!row.done,
+    notes: row.notes || ''
+  };
+}
+
+// Map a DB club row to the JS object format (without assignments)
+function mapClubFromDb(row) {
+  return {
+    dbId: row.id,
+    id: row.position,
+    name: row.name || '',
+    type: row.type || '',
+    materialsDate: row.materials_date || '',
+    firstMeeting: row.first_meeting || '',
+    _collapsed: !!row.collapsed,
+    assignments: []
+  };
+}
+
+async function loadData() {
+  if (!db) {
+    console.warn('No Supabase connection — loading defaults');
+    return JSON.parse(JSON.stringify(DEFAULT_CLUBS));
+  }
+  try {
+    const { data: clubRows, error: clubErr } = await db
+      .from('club_tracker_clubs')
+      .select('*')
+      .order('position', { ascending: true });
+
+    if (clubErr) throw clubErr;
+
+    // If no clubs in DB, seed from defaults
+    if (!clubRows || clubRows.length === 0) {
+      return await seedData();
+    }
+
+    // Load all assignments in one query
+    const { data: assignmentRows, error: assignErr } = await db
+      .from('club_tracker_assignments')
+      .select('*')
+      .order('position', { ascending: true });
+
+    if (assignErr) throw assignErr;
+
+    // Build clubs array
+    const all = clubRows.map(cr => {
+      const club = mapClubFromDb(cr);
+      const clubAssignments = (assignmentRows || [])
+        .filter(ar => ar.club_id === cr.id)
+        .map(mapAssignmentFromDb);
+      club.assignments = clubAssignments;
+      club._archived = (cr.position < 0);
+      return club;
+    });
+    // Split active vs archived; renumber active 1..N for display
+    const active = all.filter(c => !c._archived).sort((a, b) => a.id - b.id);
+    active.forEach((c, i) => { c.id = i + 1; });
+    archivedClubs = all.filter(c => c._archived);
+    return active;
+  } catch (err) {
+    console.error('Failed to load from Supabase, using defaults:', err);
+    return JSON.parse(JSON.stringify(DEFAULT_CLUBS));
+  }
+}
+
+async function seedData() {
+  try {
+    const result = [];
+    for (let i = 0; i < DEFAULT_CLUBS.length; i++) {
+      const dc = DEFAULT_CLUBS[i];
+      const { data: clubRow, error: clubErr } = await db
+        .from('club_tracker_clubs')
+        .insert({
+          position: dc.id,
+          name: dc.name,
+          type: dc.type,
+          materials_date: dc.materialsDate,
+          first_meeting: dc.firstMeeting,
+          collapsed: false
+        })
+        .select()
+        .single();
+
+      if (clubErr) throw clubErr;
+
+      const assignmentInserts = dc.assignments.map((a, idx) => ({
+        club_id: clubRow.id,
+        position: idx,
+        name: a.name,
+        description: a.desc,
+        status: a.status,
+        rp: a.rp,
+        due: a.due,
+        done: a.done,
+        notes: a.notes || ''
+      }));
+
+      const { data: assignmentRows, error: assignErr } = await db
+        .from('club_tracker_assignments')
+        .insert(assignmentInserts)
+        .select();
+
+      if (assignErr) throw assignErr;
+
+      const club = mapClubFromDb(clubRow);
+      club.assignments = (assignmentRows || []).map(mapAssignmentFromDb);
+      result.push(club);
+    }
+    return result;
+  } catch (err) {
+    console.error('Failed to seed Supabase:', err);
+    return JSON.parse(JSON.stringify(DEFAULT_CLUBS));
+  }
+}
+
+// --- Individual Save Functions ---
+
+async function saveClub(club) {
+  if (!db || !club.dbId) return;
+  try {
+    await db
+      .from('club_tracker_clubs')
+      .update({
+        position: club.id,
+        name: club.name,
+        type: club.type,
+        materials_date: club.materialsDate,
+        first_meeting: club.firstMeeting,
+        collapsed: !!club._collapsed
+      })
+      .eq('id', club.dbId);
+  } catch (err) {
+    console.error('Failed to save club:', err);
+  }
+}
+
+async function saveAssignment(clubDbId, assignment) {
+  if (!db || !assignment.dbId) return;
+  try {
+    await db
+      .from('club_tracker_assignments')
+      .update({
+        club_id: clubDbId,
+        name: assignment.name,
+        description: assignment.desc,
+        status: assignment.status,
+        rp: assignment.rp,
+        due: assignment.due,
+        done: assignment.done,
+        notes: assignment.notes
+      })
+      .eq('id', assignment.dbId);
+  } catch (err) {
+    console.error('Failed to save assignment:', err);
+  }
+}
+
+async function updateAssignmentPositions(club) {
+  if (!db || !club.dbId) return;
+  try {
+    const updates = club.assignments.map((a, idx) => {
+      if (!a.dbId) return null;
+      return db
+        .from('club_tracker_assignments')
+        .update({ position: idx })
+        .eq('id', a.dbId);
+    }).filter(Boolean);
+    await Promise.all(updates);
+  } catch (err) {
+    console.error('Failed to update assignment positions:', err);
+  }
+}
+
+function promptNewClub() {
+  return new Promise(resolve => {
+    const max = clubs.length + 1;
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:10px;padding:24px;width:380px;max-width:90vw;box-shadow:0 20px 50px rgba(0,0,0,0.3);font-family:inherit">
+        <h2 style="margin:0 0 16px;font-size:1.2rem">Add Club</h2>
+        <label style="display:block;font-size:0.8rem;font-weight:600;margin-bottom:4px">Club name</label>
+        <input id="ncName" type="text" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-bottom:12px;font-size:0.9rem" autofocus>
+        <label style="display:block;font-size:0.8rem;font-weight:600;margin-bottom:4px">Club leads (Recruiting & Deal Manager)</label>
+        <input id="ncLeads" type="text" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-bottom:12px;font-size:0.9rem">
+        <label style="display:block;font-size:0.8rem;font-weight:600;margin-bottom:4px">Spot in queue (1 – ${max})</label>
+        <input id="ncPos" type="number" min="1" max="${max}" value="${max}" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;margin-bottom:18px;font-size:0.9rem">
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button id="ncCancel" style="padding:8px 16px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;cursor:pointer">Cancel</button>
+          <button id="ncOk" style="padding:8px 16px;border:1px solid #0f766e;background:#0f766e;color:#fff;border-radius:6px;cursor:pointer;font-weight:600">Add Club</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    const close = val => { document.body.removeChild(overlay); resolve(val); };
+    overlay.querySelector('#ncCancel').onclick = () => close(null);
+    overlay.querySelector('#ncOk').onclick = () => {
+      const name = overlay.querySelector('#ncName').value.trim();
+      if (!name) { overlay.querySelector('#ncName').focus(); return; }
+      const leads = overlay.querySelector('#ncLeads').value.trim();
+      let pos = parseInt(overlay.querySelector('#ncPos').value, 10);
+      if (isNaN(pos) || pos < 1) pos = max;
+      if (pos > max) pos = max;
+      close({ name, leads, pos });
+    };
+    overlay.addEventListener('keydown', e => {
+      if (e.key === 'Enter') overlay.querySelector('#ncOk').click();
+      if (e.key === 'Escape') close(null);
+    });
+    setTimeout(() => overlay.querySelector('#ncName').focus(), 0);
+  });
+}
+
+async function addClub() {
+  if (!db) { alert('No database connection.'); return; }
+  const result = await promptNewClub();
+  if (!result) return;
+  const { name, leads, pos } = result;
+
+  try {
+    // Shift existing clubs at/after pos down by 1 (descending to avoid unique conflicts if any)
+    const toShift = clubs.filter(c => c.id >= pos).sort((a, b) => b.id - a.id);
+    for (const c of toShift) {
+      c.id = c.id + 1;
+      await db.from('club_tracker_clubs').update({ position: c.id }).eq('id', c.dbId);
+    }
+
+    // Insert new club
+    const { data: clubRow, error: clubErr } = await db
+      .from('club_tracker_clubs')
+      .insert({
+        position: pos,
+        name: name,
+        type: 'TBD',
+        materials_date: 'TBD',
+        first_meeting: 'TBD',
+        collapsed: false
+      })
+      .select()
+      .single();
+    if (clubErr) throw clubErr;
+
+    const template = [
+      { name: 'Recruiting Manager', desc: 'Owns recruiting pipeline, runs outreach, sets culture', rp: leads, due: 'Pre-launch' },
+      { name: 'Deal Manager', desc: 'Owns investment thesis, runs deal drops and meeting content', rp: leads, due: 'Pre-launch' },
+      { name: 'Prospect List (30+)', desc: 'Named list of 30+ targets to hit 15-25 members', rp: '', due: 'Pre-launch' },
+      { name: 'Typeform / Application', desc: 'Screening form live and linked from landing page', rp: '', due: 'TBD' },
+      { name: 'One-Pager', desc: 'Club PDF pitch (thesis, structure, value prop)', rp: '', due: 'TBD' },
+      { name: 'Representative Deals', desc: 'Sample deal sheet for the club', rp: '', due: 'TBD' },
+      { name: 'Landing Page', desc: 'Public page with application link', rp: '', due: 'TBD' },
+      { name: 'Pipeline Tracker', desc: 'Set up in Member Portal — prospect, source, status, last touch', rp: '', due: 'TBD' },
+      { name: 'Outreach Templates', desc: 'Cold intro, warm intro, follow-up, referral ask emails', rp: '', due: 'TBD' }
+    ];
+
+    const inserts = template.map((a, idx) => ({
+      club_id: clubRow.id,
+      position: idx,
+      name: a.name,
+      description: a.desc,
+      status: 'Not started',
+      rp: a.rp,
+      due: a.due,
+      done: false,
+      notes: ''
+    }));
+
+    const { error: assignErr } = await db.from('club_tracker_assignments').insert(inserts);
+    if (assignErr) throw assignErr;
+
+    // Reload everything to get fresh state
+    clubs = await loadData();
+    render();
+  } catch (err) {
+    console.error('Failed to add club:', err);
+    alert('Failed to add club: ' + (err.message || err));
+  }
+}
+
+async function renameClub(ci) {
+  const club = clubs[ci];
+  if (!club) return;
+  const name = (prompt('New club name:', club.name) || '').trim();
+  if (!name || name === club.name) return;
+  club.name = name;
+  await saveClub(club);
+  render();
+}
+
+async function archiveClub(ci) {
+  const club = clubs[ci];
+  if (!club) return;
+  if (!confirm(`Archive "${club.name}"?\n\nThis will hide it from the main view. You can restore it later.`)) return;
+  if (!confirm(`Are you sure? Confirm archive of "${club.name}".`)) return;
+  try {
+    const archivedPos = -Date.now();
+    await db.from('club_tracker_clubs').update({ position: archivedPos }).eq('id', club.dbId);
+    clubs = await loadData();
+    // Resequence remaining clubs to 1..N in DB
+    for (const c of clubs) {
+      await db.from('club_tracker_clubs').update({ position: c.id }).eq('id', c.dbId);
+    }
+    render();
+  } catch (err) {
+    console.error('Failed to archive:', err);
+    alert('Failed to archive: ' + (err.message || err));
+  }
+}
+
+async function restoreClub(dbId) {
+  const club = archivedClubs.find(c => c.dbId === dbId);
+  if (!club) return;
+  const max = clubs.length + 1;
+  const posStr = prompt(`Restore "${club.name}" to which spot? (1 - ${max})`, String(max));
+  if (posStr === null) return;
+  let pos = parseInt(posStr, 10);
+  if (isNaN(pos) || pos < 1) pos = max;
+  if (pos > max) pos = max;
+  try {
+    // Shift existing clubs at/after pos down by 1 (descending)
+    const toShift = clubs.filter(c => c.id >= pos).sort((a, b) => b.id - a.id);
+    for (const c of toShift) {
+      await db.from('club_tracker_clubs').update({ position: c.id + 1 }).eq('id', c.dbId);
+    }
+    await db.from('club_tracker_clubs').update({ position: pos }).eq('id', club.dbId);
+    clubs = await loadData();
+    render();
+    showArchived = false;
+  } catch (err) {
+    console.error('Failed to restore:', err);
+    alert('Failed to restore: ' + (err.message || err));
+  }
+}
+
+function toggleArchivedView() {
+  showArchived = !showArchived;
+  render();
+}
+
+// --- App State ---
+let clubs = [];
+let archivedClubs = [];
+let showArchived = false;
+
+function formatDue(due) {
+  if (!due || due === 'Pre-launch') return due || '';
+  const d = new Date(due + 'T00:00:00');
+  if (isNaN(d)) return due;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function isOverdue(due) {
+  if (!due || due === 'Pre-launch') return false;
+  const d = new Date(due + 'T00:00:00');
+  if (isNaN(d)) return false;
+  return d < new Date() && d.toDateString() !== new Date().toDateString();
+}
+
+function getProgress(club) {
+  const total = club.assignments.length;
+  const done = club.assignments.filter(a => a.done).length;
+  return { done, total };
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  const filter = document.getElementById('filterSelect').value;
+  const clubFilterVal = document.getElementById('clubFilter').value;
+
+  // Populate club filter
+  const clubSelect = document.getElementById('clubFilter');
+  const currentClubVal = clubSelect.value;
+  clubSelect.innerHTML = '<option value="all">All Clubs</option>';
+  clubs.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = `#${c.id} ${c.name}`;
+    clubSelect.appendChild(opt);
+  });
+  clubSelect.value = currentClubVal;
+
+  // Update archived button label
+  const archBtn = document.getElementById('archivedBtn');
+  if (archBtn) archBtn.textContent = `${showArchived ? 'Hide' : 'Show'} Archived (${archivedClubs.length})`;
+
+  let html = '';
+  if (showArchived && archivedClubs.length) {
+    html += `<div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:16px">
+      <div style="font-weight:600;margin-bottom:8px">Archived Clubs</div>`;
+    archivedClubs.forEach(c => {
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px solid #e2e8f0">
+        <span>${escapeHtml(c.name)} <span style="color:#64748b;font-size:0.8rem">&middot; ${escapeHtml(c.type || '')}</span></span>
+        <button onclick="restoreClub(${c.dbId})" style="padding:4px 12px;border:1px solid #0f766e;background:#fff;color:#0f766e;border-radius:6px;cursor:pointer;font-size:0.8rem;font-weight:600">Restore</button>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  clubs.forEach((club, ci) => {
+    if (clubFilterVal !== 'all' && String(club.id) !== clubFilterVal) return;
+
+    const prog = getProgress(club);
+    const collapsed = club._collapsed ? 'collapsed' : '';
+    const bodyHidden = club._collapsed ? 'hidden' : '';
+
+    // Filter assignments
+    let visibleAssignments = club.assignments.map((a, ai) => ({ ...a, _idx: ai }));
+    if (filter === 'incomplete') visibleAssignments = visibleAssignments.filter(a => !a.done);
+    else if (filter === 'overdue') visibleAssignments = visibleAssignments.filter(a => !a.done && isOverdue(a.due));
+
+    html += `<div class="club-section" data-club="${ci}">
+      <div class="club-header" onclick="toggleClub(${ci})">
+        <div class="club-reorder" onclick="event.stopPropagation()">
+          <button onclick="moveClub(${ci},-1)" ${ci === 0 ? 'disabled' : ''} title="Move up">&#9650;</button>
+          <button onclick="moveClub(${ci},1)" ${ci === clubs.length - 1 ? 'disabled' : ''} title="Move down">&#9660;</button>
+        </div>
+        <div style="flex:1">
+          <span class="club-title">#${club.id} ${escapeHtml(club.name)}</span>
+          <button class="edit-only" onclick="event.stopPropagation();renameClub(${ci})" title="Rename club" style="margin-left:6px;padding:2px 6px;border:1px solid #cbd5e1;background:#fff;border-radius:4px;cursor:pointer;font-size:0.75rem">✎</button>
+          <span class="club-meta"> &middot; ${escapeHtml(club.type)} &middot; Materials: ${escapeHtml(club.materialsDate)} &middot; First Meeting: ${escapeHtml(club.firstMeeting)}</span>
+        </div>
+        <span class="club-progress">${prog.done}/${prog.total} done</span>
+        <button class="edit-only" onclick="event.stopPropagation();archiveClub(${ci})" title="Archive club" style="margin:0 8px;padding:4px 10px;border:1px solid #cbd5e1;background:#fff;border-radius:6px;cursor:pointer;font-size:0.75rem">Archive</button>
+        <span class="chevron ${collapsed}">&#9660;</span>
+      </div>
+      <div class="club-body ${bodyHidden}">
+        <table>
+          <thead><tr>
+            <th class="drag-col"></th>
+            <th class="check-col"></th>
+            <th>Assignment</th>
+            <th>Status</th>
+            <th>RP</th>
+            <th>Due</th>
+            <th class="notes-cell">Notes</th>
+            <th style="width:30px"></th>
+          </tr></thead>
+          <tbody>`;
+
+    visibleAssignments.forEach(a => {
+      const ai = a._idx;
+      const rowClass = a.done ? 'done' : '';
+      const statusClass = a.status === 'Done' || a.done ? 'done' : (a.status === 'In progress' ? 'in-progress' : 'not-started');
+      const dueStr = formatDue(a.due);
+      const overdueClass = !a.done && isOverdue(a.due) ? 'overdue' : '';
+
+      html += `<tr class="${rowClass}" draggable="true" data-ci="${ci}" data-ai="${ai}"
+        ondragstart="onDragStart(event,${ci},${ai})" ondragend="onDragEnd(event)"
+        ondragover="onDragOver(event,${ci},${ai})" ondragleave="onDragLeave(event)"
+        ondrop="onDrop(event,${ci},${ai})">
+        <td class="drag-col"><span class="drag-handle" title="Drag to reorder">&#8942;&#8942;</span></td>
+        <td class="check-col"><input type="checkbox" ${a.done ? 'checked' : ''} onchange="toggleDone(${ci},${ai},this.checked)"></td>
+        <td style="cursor:pointer" onclick="editRow(${ci},${ai})" title="Click to edit">
+          <div class="assignment-name">${escapeHtml(a.name)} <span style="color:#c0c7d0;font-weight:400;font-size:0.75rem">&#9998;</span></div>
+          <div class="assignment-desc">${escapeHtml(a.desc)}</div>
+        </td>
+        <td>
+          <select class="status-select ${statusClass}" onchange="setStatus(${ci},${ai},this.value)">
+            <option value="Not started" ${a.status === 'Not started' ? 'selected' : ''}>Not started</option>
+            <option value="In progress" ${a.status === 'In progress' ? 'selected' : ''}>In progress</option>
+            <option value="Done" ${a.status === 'Done' ? 'selected' : ''}>Done</option>
+          </select>
+        </td>
+        <td><span class="editable" contenteditable="true" onblur="setRP(${ci},${ai},this.textContent)">${escapeHtml(a.rp)}</span></td>
+        <td class="due-date ${overdueClass}">${dueStr}</td>
+        <td class="notes-cell"><textarea class="notes-input" placeholder="Add notes..." onblur="setNotes(${ci},${ai},this.value)">${escapeHtml(a.notes)}</textarea></td>
+        <td><button class="delete-btn" onclick="deleteRow(${ci},${ai})" title="Delete row">&times;</button></td>
+      </tr>`;
+    });
+
+    html += `</tbody></table>
+        <button class="add-row-btn" onclick="addRow(${ci})">+ Add Assignment</button>
+      </div>
+    </div>`;
+  });
+
+  app.innerHTML = html;
+}
+
+function moveClub(ci, direction) {
+  const newIndex = ci + direction;
+  if (newIndex < 0 || newIndex >= clubs.length) return;
+  const temp = clubs[ci];
+  clubs[ci] = clubs[newIndex];
+  clubs[newIndex] = temp;
+  // Renumber ids to match new positions
+  clubs.forEach((c, i) => c.id = i + 1);
+  // Save both clubs' new positions to Supabase
+  saveClub(clubs[ci]);
+  saveClub(clubs[newIndex]);
+  render();
+}
+
+function toggleClub(ci) {
+  clubs[ci]._collapsed = !clubs[ci]._collapsed;
+  saveClub(clubs[ci]);
+  render();
+}
+
+function expandAll() {
+  clubs.forEach(c => {
+    c._collapsed = false;
+    saveClub(c);
+  });
+  render();
+}
+
+function collapseAll() {
+  clubs.forEach(c => {
+    c._collapsed = true;
+    saveClub(c);
+  });
+  render();
+}
+
+function toggleDone(ci, ai, checked) {
+  const a = clubs[ci].assignments[ai];
+  a.done = checked;
+  if (checked) a.status = 'Done';
+  saveAssignment(clubs[ci].dbId, a);
+  render();
+}
+
+function setStatus(ci, ai, val) {
+  const a = clubs[ci].assignments[ai];
+  a.status = val;
+  if (val === 'Done') a.done = true;
+  else a.done = false;
+  saveAssignment(clubs[ci].dbId, a);
+  render();
+}
+
+function setRP(ci, ai, val) {
+  const a = clubs[ci].assignments[ai];
+  a.rp = val.trim();
+  saveAssignment(clubs[ci].dbId, a);
+}
+
+function setNotes(ci, ai, val) {
+  const a = clubs[ci].assignments[ai];
+  a.notes = val;
+  saveAssignment(clubs[ci].dbId, a);
+}
+
+let dragSrcCi = null, dragSrcAi = null;
+
+function onDragStart(e, ci, ai) {
+  dragSrcCi = ci;
+  dragSrcAi = ai;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', '');
+}
+
+function onDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.drag-over-above, .drag-over-below').forEach(el => {
+    el.classList.remove('drag-over-above', 'drag-over-below');
+  });
+  dragSrcCi = null;
+  dragSrcAi = null;
+}
+
+function onDragOver(e, ci, ai) {
+  if (dragSrcCi !== ci) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const tr = e.currentTarget;
+  const rect = tr.getBoundingClientRect();
+  const midY = rect.top + rect.height / 2;
+  tr.classList.remove('drag-over-above', 'drag-over-below');
+  if (e.clientY < midY) {
+    tr.classList.add('drag-over-above');
+  } else {
+    tr.classList.add('drag-over-below');
+  }
+}
+
+function onDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over-above', 'drag-over-below');
+}
+
+function onDrop(e, ci, ai) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over-above', 'drag-over-below');
+  if (dragSrcCi !== ci || dragSrcAi === null || dragSrcAi === ai) return;
+  const assignments = clubs[ci].assignments;
+  const item = assignments.splice(dragSrcAi, 1)[0];
+  const rect = e.currentTarget.getBoundingClientRect();
+  const midY = rect.top + rect.height / 2;
+  let targetIdx = ai;
+  if (dragSrcAi < ai) targetIdx--;
+  if (e.clientY >= midY) targetIdx++;
+  assignments.splice(targetIdx, 0, item);
+  updateAssignmentPositions(clubs[ci]);
+  render();
+}
+
+function addRow(ci) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>Add New Assignment</h3>
+      <label>Assignment Name</label>
+      <input type="text" id="modal-name" placeholder="e.g. Sponsor Outreach" autofocus>
+      <label>Description</label>
+      <input type="text" id="modal-desc" placeholder="Brief description">
+      <label>Due Date (optional)</label>
+      <input type="date" id="modal-due">
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-primary" onclick="confirmAddRow(${ci}, false)">This Club Only</button>
+        <button class="btn-all" onclick="confirmAddRow(${ci}, true)">All Clubs</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) closeModal(); });
+  document.getElementById('modal-name').focus();
+}
+
+function closeModal() {
+  const m = document.querySelector('.modal-overlay');
+  if (m) m.remove();
+}
+
+async function confirmAddRow(ci, addToAll) {
+  const name = document.getElementById('modal-name').value.trim() || 'New Assignment';
+  const desc = document.getElementById('modal-desc').value.trim() || '';
+  const due = document.getElementById('modal-due').value || '';
+  const newItem = { name, desc, status: "Not started", rp: "", due, done: false, notes: "" };
+
+  closeModal();
+
+  if (addToAll) {
+    for (const c of clubs) {
+      c._collapsed = false;
+      const position = c.assignments.length;
+      try {
+        const { data: row, error } = await db
+          .from('club_tracker_assignments')
+          .insert({
+            club_id: c.dbId,
+            position: position,
+            name: newItem.name,
+            description: newItem.desc,
+            status: newItem.status,
+            rp: newItem.rp,
+            due: newItem.due,
+            done: newItem.done,
+            notes: newItem.notes
+          })
+          .select()
+          .single();
+        if (error) throw error;
+        c.assignments.push(mapAssignmentFromDb(row));
+        saveClub(c);
+      } catch (err) {
+        console.error('Failed to insert assignment:', err);
+        c.assignments.push({ ...newItem });
+      }
+    }
+  } else {
+    clubs[ci]._collapsed = false;
+    const position = clubs[ci].assignments.length;
+    try {
+      const { data: row, error } = await db
+        .from('club_tracker_assignments')
+        .insert({
+          club_id: clubs[ci].dbId,
+          position: position,
+          name: newItem.name,
+          description: newItem.desc,
+          status: newItem.status,
+          rp: newItem.rp,
+          due: newItem.due,
+          done: newItem.done,
+          notes: newItem.notes
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      clubs[ci].assignments.push(mapAssignmentFromDb(row));
+      saveClub(clubs[ci]);
+    } catch (err) {
+      console.error('Failed to insert assignment:', err);
+      clubs[ci].assignments.push({ ...newItem });
+    }
+  }
+  render();
+}
+
+function deleteRow(ci, ai) {
+  const a = clubs[ci].assignments[ai];
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>Delete Assignment</h3>
+      <p style="font-size:0.9rem;margin-bottom:16px;color:var(--gray)">Delete <strong>${escapeHtml(a.name)}</strong>?</p>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-primary" style="background:var(--red);border-color:var(--red)" onclick="confirmDelete(${ci},${ai},false)">This Club Only</button>
+        <button class="btn-all" style="background:#fef2f2;color:var(--red);border-color:var(--red)" onclick="confirmDelete(${ci},${ai},true)">All Clubs</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) closeModal(); });
+}
+
+async function confirmDelete(ci, ai, deleteFromAll) {
+  const name = clubs[ci].assignments[ai].name;
+  closeModal();
+
+  if (deleteFromAll) {
+    for (const c of clubs) {
+      const idx = c.assignments.findIndex(a => a.name === name);
+      if (idx !== -1) {
+        const removed = c.assignments.splice(idx, 1)[0];
+        if (removed.dbId) {
+          try {
+            await db.from('club_tracker_assignments').delete().eq('id', removed.dbId);
+          } catch (err) {
+            console.error('Failed to delete assignment:', err);
+          }
+        }
+        updateAssignmentPositions(c);
+      }
+    }
+  } else {
+    const removed = clubs[ci].assignments.splice(ai, 1)[0];
+    if (removed.dbId) {
+      try {
+        await db.from('club_tracker_assignments').delete().eq('id', removed.dbId);
+      } catch (err) {
+        console.error('Failed to delete assignment:', err);
+      }
+    }
+    updateAssignmentPositions(clubs[ci]);
+  }
+  render();
+}
+
+function editRow(ci, ai) {
+  const a = clubs[ci].assignments[ai];
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h3>Edit Assignment</h3>
+      <label>Assignment Name</label>
+      <input type="text" id="modal-edit-name" value="${escapeHtml(a.name)}">
+      <label>Description</label>
+      <input type="text" id="modal-edit-desc" value="${escapeHtml(a.desc)}">
+      <label>Due Date</label>
+      <input type="date" id="modal-edit-due" value="${a.due && a.due !== 'Pre-launch' ? a.due : ''}">
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-primary" onclick="confirmEdit(${ci},${ai},false)">This Club Only</button>
+        <button class="btn-all" onclick="confirmEdit(${ci},${ai},true)">All Clubs</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) closeModal(); });
+  document.getElementById('modal-edit-name').focus();
+}
+
+async function confirmEdit(ci, ai, editAll) {
+  const origName = clubs[ci].assignments[ai].name;
+  const newName = document.getElementById('modal-edit-name').value.trim() || origName;
+  const newDesc = document.getElementById('modal-edit-desc').value.trim();
+  const newDue = document.getElementById('modal-edit-due').value || clubs[ci].assignments[ai].due;
+
+  closeModal();
+
+  if (editAll) {
+    for (const c of clubs) {
+      const match = c.assignments.find(a => a.name === origName);
+      if (match) {
+        match.name = newName;
+        match.desc = newDesc;
+        match.due = newDue;
+        saveAssignment(c.dbId, match);
+      }
+    }
+  } else {
+    const a = clubs[ci].assignments[ai];
+    a.name = newName;
+    a.desc = newDesc;
+    a.due = newDue;
+    saveAssignment(clubs[ci].dbId, a);
+  }
+  render();
+}
+
+function exportData() {
+  // Export a clean version without dbIds for portability
+  const exportClubs = clubs.map(c => ({
+    id: c.id,
+    name: c.name,
+    type: c.type,
+    materialsDate: c.materialsDate,
+    firstMeeting: c.firstMeeting,
+    assignments: c.assignments.map(a => ({
+      name: a.name,
+      desc: a.desc,
+      status: a.status,
+      rp: a.rp,
+      due: a.due,
+      done: a.done,
+      notes: a.notes
+    }))
+  }));
+  const blob = new Blob([JSON.stringify(exportClubs, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'av_clubs_tracker_backup.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!Array.isArray(data)) { alert('Invalid JSON file.'); return; }
+
+      // Delete all existing data in Supabase
+      try {
+        await db.from('club_tracker_assignments').delete().neq('id', 0);
+        await db.from('club_tracker_clubs').delete().neq('id', 0);
+      } catch (err) {
+        console.error('Failed to clear existing data:', err);
+      }
+
+      // Insert imported data
+      const result = [];
+      for (let i = 0; i < data.length; i++) {
+        const dc = data[i];
+        try {
+          const { data: clubRow, error: clubErr } = await db
+            .from('club_tracker_clubs')
+            .insert({
+              position: dc.id || (i + 1),
+              name: dc.name,
+              type: dc.type,
+              materials_date: dc.materialsDate,
+              first_meeting: dc.firstMeeting,
+              collapsed: false
+            })
+            .select()
+            .single();
+          if (clubErr) throw clubErr;
+
+          const assignmentInserts = (dc.assignments || []).map((a, idx) => ({
+            club_id: clubRow.id,
+            position: idx,
+            name: a.name,
+            description: a.desc,
+            status: a.status,
+            rp: a.rp,
+            due: a.due,
+            done: a.done,
+            notes: a.notes || ''
+          }));
+
+          const { data: assignmentRows, error: assignErr } = await db
+            .from('club_tracker_assignments')
+            .insert(assignmentInserts)
+            .select();
+          if (assignErr) throw assignErr;
+
+          const club = mapClubFromDb(clubRow);
+          club.assignments = (assignmentRows || []).map(mapAssignmentFromDb);
+          result.push(club);
+        } catch (err) {
+          console.error('Failed to import club:', err);
+        }
+      }
+
+      clubs = result;
+      render();
+      alert('Data imported successfully!');
+    } catch(err) {
+      alert('Invalid JSON file.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+document.getElementById('filterSelect').addEventListener('change', render);
+document.getElementById('clubFilter').addEventListener('change', render);
+
+// --- Auth ---
+const ALLOWED_EDITORS = ['mike@av.vc', 'emily@av.vc'];
+let currentUser = null;
+
+function isEditor() {
+  return currentUser && ALLOWED_EDITORS.includes((currentUser.email || '').toLowerCase());
+}
+
+function applyAuthState() {
+  const editor = isEditor();
+  document.body.classList.toggle('view-mode', !editor);
+  const pill = document.getElementById('authPill');
+  if (!pill) return;
+  if (currentUser) {
+    const email = currentUser.email || '';
+    const status = editor ? '✏️ Editor' : '👁 View only';
+    pill.innerHTML = `<span>${status}: ${escapeHtml(email)}</span><button onclick="signOut()">Sign out</button>`;
+  } else {
+    pill.innerHTML = `<span>👁 View only</span><button onclick="signIn()">Sign in to edit</button>`;
+  }
+  // Re-render so view-mode hides edit-only buttons inside #app
+  if (clubs && clubs.length) render();
+  refreshSuggestionsBadge();
+}
+
+async function signIn() {
+  const email = (prompt('Enter your email to receive a magic sign-in link:') || '').trim();
+  if (!email) return;
+  try {
+    const { error } = await db.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin + window.location.pathname }
+    });
+    if (error) throw error;
+    alert('Check your email for a sign-in link.');
+  } catch (err) {
+    console.error(err);
+    alert('Sign-in failed: ' + (err.message || err));
+  }
+}
+
+async function signOut() {
+  try { await db.auth.signOut(); } catch (e) { console.error(e); }
+  currentUser = null;
+  applyAuthState();
+}
+
+// --- App Initialization ---
+(async function init() {
+  const app = document.getElementById('app');
+  app.innerHTML = '<p style="text-align:center;padding:40px;color:var(--gray);">Loading data from server...</p>';
+
+  if (db && db.auth) {
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      currentUser = session ? session.user : null;
+    } catch (e) { console.error(e); }
+    db.auth.onAuthStateChange((_event, session) => {
+      currentUser = session ? session.user : null;
+      applyAuthState();
+    });
+  }
+
+  clubs = await loadData();
+  applyAuthState();
+  render();
+})();
+
+// --- Suggestion Log ---
+function showSuggestModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:460px;">
+      <h3>💡 Submit a Suggestion</h3>
+      <p style="font-size:0.82rem;color:var(--gray);margin:0 0 12px;">Bug, idea, or feedback — anything helps. Email is optional.</p>
+      <label>Category</label>
+      <select id="suggestCategory" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;margin-bottom:12px;">
+        <option value="idea">Idea / feature request</option>
+        <option value="bug">Bug</option>
+        <option value="content">Content / data correction</option>
+        <option value="other">Other</option>
+      </select>
+      <label>Your suggestion</label>
+      <textarea id="suggestBody" rows="5" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;font-family:inherit;margin-bottom:12px;" placeholder="What would make this tracker better?"></textarea>
+      <label>Your email (optional)</label>
+      <input type="text" id="suggestEmail" placeholder="you@av.vc">
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-primary" onclick="submitSuggestion()">Submit</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) closeModal(); });
+  setTimeout(() => { const t = document.getElementById('suggestBody'); if (t) t.focus(); }, 50);
+}
+
+async function submitSuggestion() {
+  const body = (document.getElementById('suggestBody').value || '').trim();
+  const category = document.getElementById('suggestCategory').value;
+  const email = (document.getElementById('suggestEmail').value || '').trim() || null;
+  if (!body) { alert('Please enter a suggestion.'); return; }
+  if (!db) { alert('Offline — cannot submit right now.'); return; }
+  try {
+    const { error } = await db.from('suggestions').insert({
+      body, category, author_email: email, status: 'new'
+    });
+    if (error) throw error;
+    closeModal();
+    alert('Thanks! Your suggestion was submitted.');
+    refreshSuggestionsBadge();
+  } catch (err) {
+    console.error(err);
+    alert('Submit failed: ' + (err.message || err) + '\n\nIf this is the first time, the suggestions table may not be set up yet — see README.');
+  }
+}
+
+async function showSuggestionsListModal() {
+  if (!db) { alert('Offline — cannot load suggestions.'); return; }
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:720px;max-height:80vh;display:flex;flex-direction:column;">
+      <h3>Suggestions Log</h3>
+      <div id="suggestionsListBody" style="flex:1;overflow-y:auto;font-size:0.85rem;">Loading…</div>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeModal()">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) closeModal(); });
+  try {
+    const { data, error } = await db.from('suggestions').select('*').order('created_at', { ascending: false });
+    if (error) throw error;
+    const listEl = document.getElementById('suggestionsListBody');
+    if (!data || data.length === 0) {
+      listEl.innerHTML = '<p style="color:var(--gray);padding:20px 0;">No suggestions yet.</p>';
+      return;
+    }
+    listEl.innerHTML = data.map(s => {
+      const dt = new Date(s.created_at).toLocaleString();
+      const cat = escapeHtml(s.category || '—');
+      const email = s.author_email ? escapeHtml(s.author_email) : '<span style="color:var(--gray)">anonymous</span>';
+      const statusColor = s.status === 'done' ? 'var(--green)' : s.status === 'wontfix' ? 'var(--gray)' : s.status === 'triaged' ? 'var(--yellow)' : 'var(--accent)';
+      return `
+        <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
+          <div style="display:flex;gap:10px;align-items:center;font-size:0.78rem;color:var(--gray);margin-bottom:6px;">
+            <span style="font-weight:600;color:${statusColor};text-transform:uppercase;">${escapeHtml(s.status || 'new')}</span>
+            <span>·</span><span>${cat}</span>
+            <span>·</span><span>${dt}</span>
+            <span>·</span><span>${email}</span>
+            <span style="margin-left:auto;">
+              <select onchange="updateSuggestionStatus(${s.id}, this.value)" style="font-size:0.75rem;padding:2px 6px;border:1px solid var(--border);border-radius:4px;">
+                <option value="new" ${s.status==='new'?'selected':''}>new</option>
+                <option value="triaged" ${s.status==='triaged'?'selected':''}>triaged</option>
+                <option value="done" ${s.status==='done'?'selected':''}>done</option>
+                <option value="wontfix" ${s.status==='wontfix'?'selected':''}>wontfix</option>
+              </select>
+            </span>
+          </div>
+          <div style="white-space:pre-wrap;">${escapeHtml(s.body || '')}</div>
+        </div>`;
+    }).join('');
+  } catch (err) {
+    console.error(err);
+    document.getElementById('suggestionsListBody').innerHTML =
+      '<p style="color:var(--red);padding:20px 0;">Failed to load: ' + escapeHtml(err.message || String(err)) + '<br><br>If the table doesn\'t exist yet, see README.md for the SQL to create it.</p>';
+  }
+}
+
+async function updateSuggestionStatus(id, status) {
+  if (!db) return;
+  try {
+    const { error } = await db.from('suggestions').update({ status }).eq('id', id);
+    if (error) throw error;
+    refreshSuggestionsBadge();
+  } catch (err) {
+    console.error(err);
+    alert('Update failed: ' + (err.message || err));
+  }
+}
+
+async function refreshSuggestionsBadge() {
+  const badge = document.getElementById('suggestionsBadge');
+  if (!badge || !db || !isEditor()) { if (badge) badge.style.display = 'none'; return; }
+  try {
+    const { count, error } = await db.from('suggestions')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'new');
+    if (error) throw error;
+    if (count && count > 0) {
+      badge.textContent = count;
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  } catch (err) {
+    // Table may not exist yet — silent fail
+    badge.style.display = 'none';
+  }
+}
+
+// --- PDF Report Generation ---
+let jspdfLoaded = false;
+function loadJsPDF() {
+  return new Promise((resolve, reject) => {
+    if (jspdfLoaded) return resolve();
+    const s1 = document.createElement('script');
+    s1.src = './lib/jspdf.umd.min.js';
+    s1.onload = () => {
+      const s2 = document.createElement('script');
+      s2.src = './lib/jspdf.plugin.autotable.min.js';
+      s2.onload = () => { jspdfLoaded = true; resolve(); };
+      s2.onerror = reject;
+      document.head.appendChild(s2);
+    };
+    s1.onerror = reject;
+    document.head.appendChild(s1);
+  });
+}
+
+function showReportModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  const clubChecks = clubs.map((c, i) => `
+    <label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9;">
+      <input type="checkbox" checked data-club-idx="${i}" style="width:auto;accent-color:var(--accent);">
+      <span style="font-weight:600">#${c.id}</span> ${escapeHtml(c.name)}
+      <span style="margin-left:auto;font-size:0.8rem;color:var(--gray)">${c.type}</span>
+    </label>`).join('');
+  overlay.innerHTML = `
+    <div class="modal" style="max-width:480px;">
+      <h3>Generate PDF Report</h3>
+      <p style="font-size:0.85rem;color:var(--gray);margin:0 0 12px;">Select which clubs to include:</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button class="btn-cancel" style="font-size:0.75rem;padding:4px 10px;" onclick="document.querySelectorAll('.report-club-check input').forEach(c=>c.checked=true)">Select All</button>
+        <button class="btn-cancel" style="font-size:0.75rem;padding:4px 10px;" onclick="document.querySelectorAll('.report-club-check input').forEach(c=>c.checked=false)">Deselect All</button>
+      </div>
+      <div class="report-club-check" style="max-height:300px;overflow-y:auto;margin-bottom:16px;">${clubChecks}</div>
+      <div class="modal-btns">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-primary" onclick="runReportFromModal()">Generate PDF</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) closeModal(); });
+}
+
+function runReportFromModal() {
+  const checks = document.querySelectorAll('.report-club-check input');
+  const selectedIndices = [];
+  checks.forEach(cb => { if (cb.checked) selectedIndices.push(parseInt(cb.dataset.clubIdx)); });
+  if (selectedIndices.length === 0) { alert('Select at least one club.'); return; }
+  closeModal();
+  generatePDF(selectedIndices);
+}
+
+async function generatePDF(selectedIndices) {
+  try {
+    await loadJsPDF();
+  } catch(e) {
+    alert('Failed to load PDF library. Ensure the lib/ folder contains jspdf.umd.min.js and jspdf.plugin.autotable.min.js');
+    return;
+  }
+
+  const reportClubs = selectedIndices.map(i => clubs[i]);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 40;
+  const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const accent = [37, 99, 235];
+  const red = [220, 38, 38];
+  const green = [22, 163, 74];
+  const gray = [100, 116, 139];
+  const darkText = [30, 41, 59];
+
+  // --- HEADER ---
+  doc.setFillColor(...accent);
+  doc.rect(0, 0, pageW, 56, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text('AV Clubs — Assignment Tracker Report', margin, 36);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(today, pageW - margin, 36, { align: 'right' });
+
+  let y = 76;
+
+  // --- EXECUTIVE SUMMARY ---
+  const totalItems = reportClubs.reduce((s, c) => s + c.assignments.length, 0);
+  const totalDone = reportClubs.reduce((s, c) => s + c.assignments.filter(a => a.done).length, 0);
+  const totalInProgress = reportClubs.reduce((s, c) => s + c.assignments.filter(a => a.status === 'In progress').length, 0);
+  const totalNotStarted = totalItems - totalDone - totalInProgress;
+  const totalOverdue = reportClubs.reduce((s, c) => s + c.assignments.filter(a => !a.done && isOverdue(a.due)).length, 0);
+  const pctDone = totalItems ? Math.round((totalDone / totalItems) * 100) : 0;
+
+  doc.setTextColor(...darkText);
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Executive Summary', margin, y);
+  y += 20;
+
+  // Summary boxes
+  const boxes = [
+    { label: 'Total Items', val: totalItems, color: darkText },
+    { label: 'Complete', val: `${totalDone} (${pctDone}%)`, color: green },
+    { label: 'In Progress', val: totalInProgress, color: [202, 138, 4] },
+    { label: 'Not Started', val: totalNotStarted, color: gray },
+    { label: 'Overdue', val: totalOverdue, color: red },
+  ];
+  const boxW = (pageW - margin * 2 - 4 * 12) / 5;
+  boxes.forEach((b, i) => {
+    const bx = margin + i * (boxW + 12);
+    doc.setFillColor(245, 247, 250);
+    doc.roundedRect(bx, y, boxW, 44, 4, 4, 'F');
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...b.color);
+    doc.text(String(b.val), bx + boxW / 2, y + 22, { align: 'center' });
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...gray);
+    doc.text(b.label, bx + boxW / 2, y + 36, { align: 'center' });
+  });
+  y += 60;
+
+  // --- SECTION 1: STATUS SUMMARY PER CLUB ---
+  doc.setTextColor(...darkText);
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Status Summary by Club', margin, y);
+  y += 6;
+
+  const summaryRows = reportClubs.map(c => {
+    const total = c.assignments.length;
+    const done = c.assignments.filter(a => a.done).length;
+    const inProg = c.assignments.filter(a => a.status === 'In progress').length;
+    const notStarted = total - done - inProg;
+    const overdue = c.assignments.filter(a => !a.done && isOverdue(a.due)).length;
+    const pct = total ? Math.round((done / total) * 100) + '%' : '0%';
+    return [`#${c.id} ${c.name}`, c.type, c.firstMeeting, `${done}/${total} (${pct})`, String(inProg), String(notStarted), String(overdue)];
+  });
+
+  doc.autoTable({
+    startY: y,
+    margin: { left: margin, right: margin },
+    head: [['Club', 'Type', 'First Mtg', 'Complete', 'In Prog', 'Not Started', 'Overdue']],
+    body: summaryRows,
+    styles: { fontSize: 8, cellPadding: 5, textColor: darkText, lineColor: [224, 227, 232], lineWidth: 0.5 },
+    headStyles: { fillColor: accent, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7.5 },
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 130 },
+      6: { halign: 'center' },
+    },
+    didParseCell: function(data) {
+      if (data.section === 'body') {
+        if (data.column.index === 6 && parseInt(data.cell.raw) > 0) {
+          data.cell.styles.textColor = red;
+          data.cell.styles.fontStyle = 'bold';
+        }
+      }
+    },
+    alternateRowStyles: { fillColor: [248, 250, 252] },
+  });
+
+  // --- SECTION 2: DETAILED PUNCHLIST PER CLUB ---
+  reportClubs.forEach(club => {
+    doc.addPage('letter', 'landscape');
+    let cy = 40;
+
+    // Club header bar
+    doc.setFillColor(...accent);
+    doc.rect(0, 0, pageW, 48, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`#${club.id}  ${club.name}`, margin, 30);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${club.type}  |  Materials: ${club.materialsDate}  |  First Meeting: ${club.firstMeeting}`, pageW - margin, 30, { align: 'right' });
+    cy = 64;
+
+    const rows = club.assignments.map(a => {
+      const status = a.done ? 'Done' : a.status;
+      const dueStr = formatDue(a.due);
+      const overdueFlag = !a.done && isOverdue(a.due) ? ' (OVERDUE)' : '';
+      return [
+        a.done ? 'Y' : '',
+        a.name,
+        a.desc,
+        status,
+        a.rp || '—',
+        dueStr + overdueFlag,
+        a.notes || ''
+      ];
+    });
+
+    doc.autoTable({
+      startY: cy,
+      margin: { left: margin, right: margin },
+      head: [['Done', 'Assignment', 'Description', 'Status', 'RP', 'Due', 'Notes']],
+      body: rows,
+      styles: { fontSize: 7.5, cellPadding: 4, textColor: darkText, lineColor: [224, 227, 232], lineWidth: 0.5, overflow: 'linebreak' },
+      headStyles: { fillColor: [55, 65, 81], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 7 },
+      columnStyles: {
+        0: { cellWidth: 30, halign: 'center', fontStyle: 'bold' },
+        1: { cellWidth: 100, fontStyle: 'bold' },
+        2: { cellWidth: 150 },
+        3: { cellWidth: 60 },
+        4: { cellWidth: 120 },
+        5: { cellWidth: 65 },
+        6: { cellWidth: 'auto' },
+      },
+      didParseCell: function(data) {
+        if (data.section === 'body') {
+          const raw = data.cell.raw || '';
+          if (data.column.index === 0 && raw === 'Y') {
+            data.cell.styles.textColor = green;
+          }
+          if (data.column.index === 3) {
+            if (raw === 'Done') data.cell.styles.textColor = green;
+            else if (raw === 'In progress') data.cell.styles.textColor = [202, 138, 4];
+            else data.cell.styles.textColor = gray;
+          }
+          if (data.column.index === 5 && raw.includes('OVERDUE')) {
+            data.cell.styles.textColor = red;
+            data.cell.styles.fontStyle = 'bold';
+          }
+        }
+      },
+      alternateRowStyles: { fillColor: [248, 250, 252] },
+    });
+  });
+
+  // --- Footer on all pages ---
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...gray);
+    doc.text(`AV Clubs Assignment Tracker  |  Generated ${today}`, margin, pageH - 20);
+    doc.text(`Page ${i} of ${totalPages}`, pageW - margin, pageH - 20, { align: 'right' });
+  }
+
+  doc.save('AV_Clubs_Report_' + new Date().toISOString().slice(0, 10) + '.pdf');
+}
+</script>
+</body>
+</html>
