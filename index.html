@@ -26,6 +26,8 @@
   .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
   .toolbar button, .toolbar select { padding: 6px 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); cursor: pointer; font-size: 0.85rem; }
   .toolbar button:hover { background: #f1f5f9; }
+  .toolbar button.primary-btn { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+  .toolbar button.primary-btn:hover { opacity: 0.9; background: var(--accent); }
   .toolbar select { appearance: auto; }
   .filter-label { font-size: 0.85rem; color: var(--gray); }
   .club-section { background: var(--card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
@@ -55,6 +57,7 @@
   .editable { border: 1px solid transparent; border-radius: 4px; padding: 2px 6px; min-width: 60px; cursor: text; transition: border-color 0.15s; }
   .editable:hover { border-color: var(--border); }
   .editable:focus { border-color: var(--accent); outline: none; background: #f8fafc; }
+  .editable:empty::before { content: attr(data-placeholder); color: #94a3b8; }
   select.status-select { border: 1px solid var(--border); border-radius: 4px; padding: 3px 6px; font-size: 0.82rem; background: var(--card); cursor: pointer; }
   select.status-select.not-started { color: var(--gray); }
   select.status-select.in-progress { color: var(--yellow); }
@@ -64,6 +67,10 @@
   .notes-input:hover { border-color: var(--border); }
   .notes-input:focus { border-color: var(--accent); outline: none; background: #f8fafc; }
   .due-date { white-space: nowrap; font-size: 0.82rem; }
+  .due-date-wrap { position: relative; display: inline-block; min-width: 70px; cursor: pointer; }
+  .due-date-display { display: inline-block; min-width: 70px; }
+  .due-date-display.placeholder { color: #94a3b8; }
+  .due-date-picker { position: absolute; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
   .overdue { color: var(--red); font-weight: 600; }
   .add-row-btn { display: block; width: 100%; padding: 8px; border: none; background: #f8fafc; color: var(--accent); cursor: pointer; font-size: 0.85rem; border-top: 1px solid var(--border); }
   .add-row-btn:hover { background: #eff6ff; }
@@ -71,7 +78,8 @@
   .modal { background: var(--card); border-radius: 12px; padding: 24px; width: 380px; max-width: 90vw; box-shadow: 0 8px 30px rgba(0,0,0,0.15); }
   .modal h3 { margin-bottom: 16px; font-size: 1rem; }
   .modal label { display: block; font-size: 0.85rem; margin-bottom: 6px; color: var(--gray); }
-  .modal input[type="text"], .modal input[type="date"] { width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; margin-bottom: 12px; }
+  .modal input[type="text"], .modal input[type="date"], .modal select, .modal textarea { width: 100%; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; margin-bottom: 12px; font-family: inherit; }
+  .modal textarea { resize: vertical; min-height: 64px; }
   .modal-btns { display: flex; gap: 8px; margin-top: 16px; }
   .modal-btns button { flex: 1; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; font-size: 0.85rem; }
   .modal-btns .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -93,28 +101,9 @@
   .staffing-grid table { font-size: 0.82rem; }
   .staffing-grid th { font-size: 0.75rem; }
   .needs-staff { color: var(--red); font-weight: 600; }
-  .key-docs { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
-  .key-docs-title { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray); font-weight: 700; margin-bottom: 8px; }
-  .key-docs-list { display: flex; flex-wrap: wrap; gap: 8px; }
-  .key-doc { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: #f8fafc; text-decoration: none; color: var(--text); font-size: 0.85rem; transition: all 0.15s; }
-  .key-doc:hover { border-color: var(--accent); background: #eff6ff; color: var(--accent); }
-  .key-doc-icon { font-size: 1.1rem; }
-  .key-doc-meta { font-size: 0.72rem; color: var(--gray); }
   .legend { font-size: 0.8rem; color: var(--gray); margin-bottom: 16px; }
   .legend span { margin-right: 16px; }
   .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
-  body.view-mode #app input,
-  body.view-mode #app select,
-  body.view-mode #app textarea,
-  body.view-mode #app .editable { pointer-events: none; background: #f8fafc; color: #475569; }
-  body.view-mode #app .add-row-btn,
-  body.view-mode #app .delete-btn,
-  body.view-mode #app .club-reorder,
-  body.view-mode .edit-only { display: none !important; }
-  body.view-mode #app [draggable] { -webkit-user-drag: none; }
-  .auth-pill { margin-left: 8px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 6px; background: #fff; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 8px; }
-  .auth-pill button { padding: 2px 8px; font-size: 0.75rem; border: 1px solid var(--border); border-radius: 4px; background: #fff; cursor: pointer; }
-  .view-banner { background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; padding: 8px 14px; border-radius: 6px; margin-bottom: 14px; font-size: 0.85rem; }
   @media print {
     .toolbar, .add-row-btn, .delete-btn { display: none !important; }
     body { padding: 0; }
@@ -127,24 +116,12 @@
   }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./env-config.js"></script>
 </head>
 <body>
 
 <h1>AV Clubs — Club Assignment Tracker</h1>
-<p class="subtitle">13 Clubs &middot; Apr 6 – Aug 31, 2026 &middot; Fill in RP and status as assignments are made</p>
-
-<div class="key-docs">
-  <div class="key-docs-title">📚 Key Documents</div>
-  <div class="key-docs-list">
-    <a class="key-doc" href="./docs/AV-Clubs-Playbook-V1.docx" download>
-      <span class="key-doc-icon">📘</span>
-      <span>
-        <div><strong>AV Clubs Playbook V1</strong></div>
-        <div class="key-doc-meta">DOCX · The full lifecycle manual</div>
-      </span>
-    </a>
-  </div>
-</div>
+<p class="subtitle" id="subtitle">13 Clubs &middot; Apr 6 – Aug 31, 2026 &middot; Fill in RP and status as assignments are made</p>
 
 <div class="legend">
   <span><span class="dot" style="background:var(--green)"></span> Complete</span>
@@ -163,28 +140,24 @@
     <option value="all">All Clubs</option>
   </select>
   <div style="flex:1"></div>
-  <button class="edit-only" onclick="addClub()" style="background:#0f766e;color:#fff;border-color:#0f766e;font-weight:600">+ Add Club</button>
   <button id="archivedBtn" onclick="toggleArchivedView()">Archived (0)</button>
-  <span id="authPill" class="auth-pill">…</span>
   <button onclick="expandAll()">Expand All</button>
   <button onclick="collapseAll()">Collapse All</button>
-  <button onclick="exportData()">Export JSON</button>
-  <button onclick="document.getElementById('importInput').click()">Import JSON</button>
-  <input type="file" id="importInput" accept=".json" style="display:none" onchange="importData(event)">
-  <button onclick="showReportModal()" style="background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600">Generate Report (PDF)</button>
-  <button onclick="showSuggestModal()" title="Submit a suggestion or bug report">💡 Suggest</button>
-  <button class="edit-only" id="viewSuggestionsBtn" onclick="showSuggestionsListModal()">View Suggestions <span id="suggestionsBadge" style="display:none;background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:0.72rem;font-weight:700;margin-left:4px;"></span></button>
+  <button onclick="showReportModal()">Generate Report (PDF)</button>
+  <button class="edit-only primary-btn" onclick="addClub()">+ Add Club</button>
 </div>
 
 <div id="app"></div>
 
 <script>
 // --- Supabase Setup ---
-const SUPABASE_URL = 'https://bcqmkuyzaaxpacjmpygv.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjcW1rdXl6YWF4cGFjam1weWd2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1MDAzNzksImV4cCI6MjA5MTA3NjM3OX0.g8YLbc_LVVYQ3S9d7v66gePTkXpj6nT7eNy6ZJ9kNBw';
+const SUPABASE_URL = window.ENV?.SUPABASE_URL || '';
+const SUPABASE_KEY = window.ENV?.SUPABASE_ANON_KEY || '';
 let db = null;
 try {
-  if (window.supabase && window.supabase.createClient) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.warn('Supabase config missing — running in offline mode');
+  } else if (window.supabase && window.supabase.createClient) {
     db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   } else {
     console.warn('Supabase JS library not loaded — running in offline mode');
@@ -521,9 +494,9 @@ async function seedData() {
 // --- Individual Save Functions ---
 
 async function saveClub(club) {
-  if (!db || !club.dbId) return;
+  if (!db || !club.dbId || !isEditor()) return false;
   try {
-    await db
+    const { error } = await db
       .from('club_tracker_clubs')
       .update({
         position: club.id,
@@ -533,16 +506,22 @@ async function saveClub(club) {
         first_meeting: club.firstMeeting,
         collapsed: !!club._collapsed
       })
-      .eq('id', club.dbId);
+      .eq('id', club.dbId)
+      .select('id')
+      .single();
+    if (error) throw error;
+    return true;
   } catch (err) {
     console.error('Failed to save club:', err);
+    alert('Failed to save club: ' + (err.message || err));
+    return false;
   }
 }
 
 async function saveAssignment(clubDbId, assignment) {
-  if (!db || !assignment.dbId) return;
+  if (!db || !assignment.dbId || !isEditor()) return false;
   try {
-    await db
+    const { error } = await db
       .from('club_tracker_assignments')
       .update({
         club_id: clubDbId,
@@ -554,25 +533,39 @@ async function saveAssignment(clubDbId, assignment) {
         done: assignment.done,
         notes: assignment.notes
       })
-      .eq('id', assignment.dbId);
+      .eq('id', assignment.dbId)
+      .select('id')
+      .single();
+    if (error) throw error;
+    return true;
   } catch (err) {
     console.error('Failed to save assignment:', err);
+    alert('Failed to save assignment: ' + (err.message || err));
+    return false;
   }
 }
 
 async function updateAssignmentPositions(club) {
-  if (!db || !club.dbId) return;
+  if (!db || !club.dbId || !isEditor()) return false;
   try {
     const updates = club.assignments.map((a, idx) => {
       if (!a.dbId) return null;
       return db
         .from('club_tracker_assignments')
         .update({ position: idx })
-        .eq('id', a.dbId);
+        .eq('id', a.dbId)
+        .select('id')
+        .single()
+        .then(({ error }) => {
+          if (error) throw error;
+        });
     }).filter(Boolean);
     await Promise.all(updates);
+    return true;
   } catch (err) {
     console.error('Failed to update assignment positions:', err);
+    alert('Failed to update assignment order: ' + (err.message || err));
+    return false;
   }
 }
 
@@ -616,7 +609,7 @@ function promptNewClub() {
 }
 
 async function addClub() {
-  if (!db) { alert('No database connection.'); return; }
+  if (!requireEditor('add clubs') || !requireDatabase('add clubs')) return;
   const result = await promptNewClub();
   if (!result) return;
   const { name, leads, pos } = result;
@@ -626,7 +619,8 @@ async function addClub() {
     const toShift = clubs.filter(c => c.id >= pos).sort((a, b) => b.id - a.id);
     for (const c of toShift) {
       c.id = c.id + 1;
-      await db.from('club_tracker_clubs').update({ position: c.id }).eq('id', c.dbId);
+      const { error } = await db.from('club_tracker_clubs').update({ position: c.id }).eq('id', c.dbId).select('id').single();
+      if (error) throw error;
     }
 
     // Insert new club
@@ -677,40 +671,51 @@ async function addClub() {
   } catch (err) {
     console.error('Failed to add club:', err);
     alert('Failed to add club: ' + (err.message || err));
+    clubs = await loadData();
+    render();
   }
 }
 
 async function renameClub(ci) {
+  if (!requireEditor('rename clubs')) return;
   const club = clubs[ci];
   if (!club) return;
   const name = (prompt('New club name:', club.name) || '').trim();
   if (!name || name === club.name) return;
+  const oldName = club.name;
   club.name = name;
-  await saveClub(club);
+  const saved = await saveClub(club);
+  if (!saved) club.name = oldName;
   render();
 }
 
 async function archiveClub(ci) {
+  if (!requireEditor('archive clubs') || !requireDatabase('archive clubs')) return;
   const club = clubs[ci];
   if (!club) return;
   if (!confirm(`Archive "${club.name}"?\n\nThis will hide it from the main view. You can restore it later.`)) return;
   if (!confirm(`Are you sure? Confirm archive of "${club.name}".`)) return;
   try {
-    const archivedPos = -Date.now();
-    await db.from('club_tracker_clubs').update({ position: archivedPos }).eq('id', club.dbId);
+    const archivedPos = -Math.floor(Date.now() / 1000);
+    let result = await db.from('club_tracker_clubs').update({ position: archivedPos }).eq('id', club.dbId).select('id').single();
+    if (result.error) throw result.error;
     clubs = await loadData();
     // Resequence remaining clubs to 1..N in DB
     for (const c of clubs) {
-      await db.from('club_tracker_clubs').update({ position: c.id }).eq('id', c.dbId);
+      result = await db.from('club_tracker_clubs').update({ position: c.id }).eq('id', c.dbId).select('id').single();
+      if (result.error) throw result.error;
     }
     render();
   } catch (err) {
     console.error('Failed to archive:', err);
     alert('Failed to archive: ' + (err.message || err));
+    clubs = await loadData();
+    render();
   }
 }
 
 async function restoreClub(dbId) {
+  if (!requireEditor('restore clubs') || !requireDatabase('restore clubs')) return;
   const club = archivedClubs.find(c => c.dbId === dbId);
   if (!club) return;
   const max = clubs.length + 1;
@@ -723,15 +728,19 @@ async function restoreClub(dbId) {
     // Shift existing clubs at/after pos down by 1 (descending)
     const toShift = clubs.filter(c => c.id >= pos).sort((a, b) => b.id - a.id);
     for (const c of toShift) {
-      await db.from('club_tracker_clubs').update({ position: c.id + 1 }).eq('id', c.dbId);
+      const { error } = await db.from('club_tracker_clubs').update({ position: c.id + 1 }).eq('id', c.dbId).select('id').single();
+      if (error) throw error;
     }
-    await db.from('club_tracker_clubs').update({ position: pos }).eq('id', club.dbId);
+    const { error } = await db.from('club_tracker_clubs').update({ position: pos }).eq('id', club.dbId).select('id').single();
+    if (error) throw error;
     clubs = await loadData();
-    render();
     showArchived = false;
+    render();
   } catch (err) {
     console.error('Failed to restore:', err);
     alert('Failed to restore: ' + (err.message || err));
+    clubs = await loadData();
+    render();
   }
 }
 
@@ -746,10 +755,31 @@ let archivedClubs = [];
 let showArchived = false;
 
 function formatDue(due) {
-  if (!due || due === 'Pre-launch') return due || '';
+  if (!due) return 'TBD';
+  if (due === 'Pre-launch') return due;
   const d = new Date(due + 'T00:00:00');
   if (isNaN(d)) return due;
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function formatDueForCell(due) {
+  return due ? formatDue(due) : '';
+}
+
+function dateInputValue(due) {
+  if (!due || due === 'Pre-launch') return '';
+  const d = new Date(due + 'T00:00:00');
+  return isNaN(d) ? '' : due;
+}
+
+function openDuePicker(el) {
+  const input = el.querySelector('input[type="date"]');
+  if (!input) return;
+  if (input.showPicker) input.showPicker();
+  else {
+    input.focus();
+    input.click();
+  }
 }
 
 function isOverdue(due) {
@@ -771,10 +801,19 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
+function escapeAttr(str) {
+  return escapeHtml(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function render() {
   const app = document.getElementById('app');
+  const editor = isEditor();
   const filter = document.getElementById('filterSelect').value;
   const clubFilterVal = document.getElementById('clubFilter').value;
+  const subtitle = document.getElementById('subtitle');
+  if (subtitle) {
+    subtitle.innerHTML = `${clubs.length} ${clubs.length === 1 ? 'Club' : 'Clubs'} &middot; Apr 6 – Aug 31, 2026 &middot; Fill in RP and status as assignments are made`;
+  }
 
   // Populate club filter
   const clubSelect = document.getElementById('clubFilter');
@@ -790,19 +829,23 @@ function render() {
 
   // Update archived button label
   const archBtn = document.getElementById('archivedBtn');
-  if (archBtn) archBtn.textContent = `${showArchived ? 'Hide' : 'Show'} Archived (${archivedClubs.length})`;
+  if (archBtn) archBtn.textContent = showArchived ? 'Show Active' : `Show Archived (${archivedClubs.length})`;
 
   let html = '';
-  if (showArchived && archivedClubs.length) {
-    html += `<div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:16px">
+  if (showArchived) {
+    if (archivedClubs.length) {
+      html += `<div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:16px">
       <div style="font-weight:600;margin-bottom:8px">Archived Clubs</div>`;
-    archivedClubs.forEach(c => {
-      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px solid #e2e8f0">
+      archivedClubs.forEach(c => {
+        html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-top:1px solid #e2e8f0">
         <span>${escapeHtml(c.name)} <span style="color:#64748b;font-size:0.8rem">&middot; ${escapeHtml(c.type || '')}</span></span>
-        <button onclick="restoreClub(${c.dbId})" style="padding:4px 12px;border:1px solid #0f766e;background:#fff;color:#0f766e;border-radius:6px;cursor:pointer;font-size:0.8rem;font-weight:600">Restore</button>
+        ${editor ? `<button onclick="restoreClub(${c.dbId})" style="padding:4px 12px;border:1px solid #0f766e;background:#fff;color:#0f766e;border-radius:6px;cursor:pointer;font-size:0.8rem;font-weight:600">Restore</button>` : ''}
       </div>`;
-    });
-    html += `</div>`;
+      });
+      html += `</div>`;
+    }
+    app.innerHTML = html;
+    return;
   }
 
   clubs.forEach((club, ci) => {
@@ -850,17 +893,22 @@ function render() {
       const ai = a._idx;
       const rowClass = a.done ? 'done' : '';
       const statusClass = a.status === 'Done' || a.done ? 'done' : (a.status === 'In progress' ? 'in-progress' : 'not-started');
-      const dueStr = formatDue(a.due);
+      const dueStr = formatDueForCell(a.due);
+      const dueDisplay = dueStr || 'Add...';
+      const dueDisplayClass = dueStr ? '' : ' placeholder';
+      const dueInputVal = dateInputValue(a.due);
       const overdueClass = !a.done && isOverdue(a.due) ? 'overdue' : '';
+      const assignmentEditAttrs = editor ? `style="cursor:pointer" onclick="editRow(${ci},${ai})" title="Click to edit"` : '';
+      const editMarker = editor ? ` <span style="color:#c0c7d0;font-weight:400;font-size:0.75rem">&#9998;</span>` : '';
 
-      html += `<tr class="${rowClass}" draggable="true" data-ci="${ci}" data-ai="${ai}"
+      html += `<tr class="${rowClass}" draggable="${editor ? 'true' : 'false'}" data-ci="${ci}" data-ai="${ai}"
         ondragstart="onDragStart(event,${ci},${ai})" ondragend="onDragEnd(event)"
         ondragover="onDragOver(event,${ci},${ai})" ondragleave="onDragLeave(event)"
         ondrop="onDrop(event,${ci},${ai})">
         <td class="drag-col"><span class="drag-handle" title="Drag to reorder">&#8942;&#8942;</span></td>
         <td class="check-col"><input type="checkbox" ${a.done ? 'checked' : ''} onchange="toggleDone(${ci},${ai},this.checked)"></td>
-        <td style="cursor:pointer" onclick="editRow(${ci},${ai})" title="Click to edit">
-          <div class="assignment-name">${escapeHtml(a.name)} <span style="color:#c0c7d0;font-weight:400;font-size:0.75rem">&#9998;</span></div>
+        <td ${assignmentEditAttrs}>
+          <div class="assignment-name">${escapeHtml(a.name)}${editMarker}</div>
           <div class="assignment-desc">${escapeHtml(a.desc)}</div>
         </td>
         <td>
@@ -870,8 +918,8 @@ function render() {
             <option value="Done" ${a.status === 'Done' ? 'selected' : ''}>Done</option>
           </select>
         </td>
-        <td><span class="editable" contenteditable="true" onblur="setRP(${ci},${ai},this.textContent)">${escapeHtml(a.rp)}</span></td>
-        <td class="due-date ${overdueClass}">${dueStr}</td>
+        <td><span class="editable" contenteditable="true" data-placeholder="Add..." onblur="setRP(${ci},${ai},this.textContent)">${escapeHtml(a.rp)}</span></td>
+        <td class="due-date ${overdueClass}"><span class="due-date-wrap" onclick="openDuePicker(this)"><span class="due-date-display${dueDisplayClass}">${escapeHtml(dueDisplay)}</span><input class="due-date-picker" type="date" value="${escapeAttr(dueInputVal)}" onkeydown="return false" onchange="setDue(${ci},${ai},this.value)"></span></td>
         <td class="notes-cell"><textarea class="notes-input" placeholder="Add notes..." onblur="setNotes(${ci},${ai},this.value)">${escapeHtml(a.notes)}</textarea></td>
         <td><button class="delete-btn" onclick="deleteRow(${ci},${ai})" title="Delete row">&times;</button></td>
       </tr>`;
@@ -886,7 +934,8 @@ function render() {
   app.innerHTML = html;
 }
 
-function moveClub(ci, direction) {
+async function moveClub(ci, direction) {
+  if (!requireEditor('reorder clubs')) return;
   const newIndex = ci + direction;
   if (newIndex < 0 || newIndex >= clubs.length) return;
   const temp = clubs[ci];
@@ -895,65 +944,121 @@ function moveClub(ci, direction) {
   // Renumber ids to match new positions
   clubs.forEach((c, i) => c.id = i + 1);
   // Save both clubs' new positions to Supabase
-  saveClub(clubs[ci]);
-  saveClub(clubs[newIndex]);
+  const saved = await Promise.all([saveClub(clubs[ci]), saveClub(clubs[newIndex])]);
+  if (saved.some(ok => !ok)) {
+    clubs = await loadData();
+  }
   render();
 }
 
-function toggleClub(ci) {
+async function toggleClub(ci) {
   clubs[ci]._collapsed = !clubs[ci]._collapsed;
-  saveClub(clubs[ci]);
+  if (isEditor()) {
+    const saved = await saveClub(clubs[ci]);
+    if (!saved) clubs[ci]._collapsed = !clubs[ci]._collapsed;
+  }
   render();
 }
 
-function expandAll() {
+async function expandAll() {
+  const prev = clubs.map(c => c._collapsed);
   clubs.forEach(c => {
     c._collapsed = false;
-    saveClub(c);
   });
+  if (isEditor()) {
+    const saved = await Promise.all(clubs.map(c => saveClub(c)));
+    if (saved.some(ok => !ok)) clubs.forEach((c, i) => { c._collapsed = prev[i]; });
+  }
   render();
 }
 
-function collapseAll() {
+async function collapseAll() {
+  const prev = clubs.map(c => c._collapsed);
   clubs.forEach(c => {
     c._collapsed = true;
-    saveClub(c);
   });
+  if (isEditor()) {
+    const saved = await Promise.all(clubs.map(c => saveClub(c)));
+    if (saved.some(ok => !ok)) clubs.forEach((c, i) => { c._collapsed = prev[i]; });
+  }
   render();
 }
 
-function toggleDone(ci, ai, checked) {
+async function toggleDone(ci, ai, checked) {
+  if (!requireEditor('update assignments')) { render(); return; }
   const a = clubs[ci].assignments[ai];
+  const prevDone = a.done;
+  const prevStatus = a.status;
   a.done = checked;
   if (checked) a.status = 'Done';
-  saveAssignment(clubs[ci].dbId, a);
+  else if (a.status === 'Done') a.status = 'Not started';
+  const saved = await saveAssignment(clubs[ci].dbId, a);
+  if (!saved) {
+    a.done = prevDone;
+    a.status = prevStatus;
+  }
   render();
 }
 
-function setStatus(ci, ai, val) {
+async function setStatus(ci, ai, val) {
+  if (!requireEditor('update assignments')) { render(); return; }
   const a = clubs[ci].assignments[ai];
+  const prevDone = a.done;
+  const prevStatus = a.status;
   a.status = val;
   if (val === 'Done') a.done = true;
   else a.done = false;
-  saveAssignment(clubs[ci].dbId, a);
+  const saved = await saveAssignment(clubs[ci].dbId, a);
+  if (!saved) {
+    a.done = prevDone;
+    a.status = prevStatus;
+  }
   render();
 }
 
-function setRP(ci, ai, val) {
+async function setRP(ci, ai, val) {
+  if (!requireEditor('update responsible parties')) { render(); return; }
   const a = clubs[ci].assignments[ai];
+  const prev = a.rp;
   a.rp = val.trim();
-  saveAssignment(clubs[ci].dbId, a);
+  const saved = await saveAssignment(clubs[ci].dbId, a);
+  if (!saved) {
+    a.rp = prev;
+    render();
+  }
 }
 
-function setNotes(ci, ai, val) {
+async function setDue(ci, ai, val) {
+  if (!requireEditor('update due dates')) { render(); return; }
   const a = clubs[ci].assignments[ai];
+  const prev = a.due;
+  a.due = val.trim();
+  const saved = await saveAssignment(clubs[ci].dbId, a);
+  if (!saved) {
+    a.due = prev;
+  }
+  render();
+}
+
+async function setNotes(ci, ai, val) {
+  if (!requireEditor('update notes')) { render(); return; }
+  const a = clubs[ci].assignments[ai];
+  const prev = a.notes;
   a.notes = val;
-  saveAssignment(clubs[ci].dbId, a);
+  const saved = await saveAssignment(clubs[ci].dbId, a);
+  if (!saved) {
+    a.notes = prev;
+    render();
+  }
 }
 
 let dragSrcCi = null, dragSrcAi = null;
 
 function onDragStart(e, ci, ai) {
+  if (!isEditor()) {
+    e.preventDefault();
+    return;
+  }
   dragSrcCi = ci;
   dragSrcAi = ai;
   e.currentTarget.classList.add('dragging');
@@ -989,10 +1094,10 @@ function onDragLeave(e) {
   e.currentTarget.classList.remove('drag-over-above', 'drag-over-below');
 }
 
-function onDrop(e, ci, ai) {
+async function onDrop(e, ci, ai) {
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over-above', 'drag-over-below');
-  if (dragSrcCi !== ci || dragSrcAi === null || dragSrcAi === ai) return;
+  if (!requireEditor('reorder assignments') || dragSrcCi !== ci || dragSrcAi === null || dragSrcAi === ai) return;
   const assignments = clubs[ci].assignments;
   const item = assignments.splice(dragSrcAi, 1)[0];
   const rect = e.currentTarget.getBoundingClientRect();
@@ -1001,11 +1106,16 @@ function onDrop(e, ci, ai) {
   if (dragSrcAi < ai) targetIdx--;
   if (e.clientY >= midY) targetIdx++;
   assignments.splice(targetIdx, 0, item);
-  updateAssignmentPositions(clubs[ci]);
+  const saved = await updateAssignmentPositions(clubs[ci]);
+  if (!saved) {
+    assignments.splice(targetIdx, 1);
+    assignments.splice(dragSrcAi, 0, item);
+  }
   render();
 }
 
 function addRow(ci) {
+  if (!requireEditor('add assignments')) return;
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
@@ -1015,8 +1125,18 @@ function addRow(ci) {
       <input type="text" id="modal-name" placeholder="e.g. Sponsor Outreach" autofocus>
       <label>Description</label>
       <input type="text" id="modal-desc" placeholder="Brief description">
+      <label>Status</label>
+      <select id="modal-status">
+        <option value="Not started">Not started</option>
+        <option value="In progress">In progress</option>
+        <option value="Done">Done</option>
+      </select>
+      <label>RP</label>
+      <input type="text" id="modal-rp" placeholder="Responsible party">
       <label>Due Date (optional)</label>
-      <input type="date" id="modal-due">
+      <input type="date" id="modal-due" onkeydown="return false">
+      <label>Notes</label>
+      <textarea id="modal-notes" placeholder="Add notes..."></textarea>
       <div class="modal-btns">
         <button class="btn-cancel" onclick="closeModal()">Cancel</button>
         <button class="btn-primary" onclick="confirmAddRow(${ci}, false)">This Club Only</button>
@@ -1034,10 +1154,14 @@ function closeModal() {
 }
 
 async function confirmAddRow(ci, addToAll) {
+  if (!requireEditor('add assignments') || !requireDatabase('add assignments')) return;
   const name = document.getElementById('modal-name').value.trim() || 'New Assignment';
   const desc = document.getElementById('modal-desc').value.trim() || '';
+  const status = document.getElementById('modal-status').value;
+  const rp = document.getElementById('modal-rp').value.trim();
   const due = document.getElementById('modal-due').value || '';
-  const newItem = { name, desc, status: "Not started", rp: "", due, done: false, notes: "" };
+  const notes = document.getElementById('modal-notes').value;
+  const newItem = { name, desc, status, rp, due, done: status === 'Done', notes };
 
   closeModal();
 
@@ -1063,10 +1187,11 @@ async function confirmAddRow(ci, addToAll) {
           .single();
         if (error) throw error;
         c.assignments.push(mapAssignmentFromDb(row));
-        saveClub(c);
+        await saveClub(c);
       } catch (err) {
         console.error('Failed to insert assignment:', err);
-        c.assignments.push({ ...newItem });
+        alert('Failed to add assignment: ' + (err.message || err));
+        return;
       }
     }
   } else {
@@ -1090,16 +1215,18 @@ async function confirmAddRow(ci, addToAll) {
         .single();
       if (error) throw error;
       clubs[ci].assignments.push(mapAssignmentFromDb(row));
-      saveClub(clubs[ci]);
+      await saveClub(clubs[ci]);
     } catch (err) {
       console.error('Failed to insert assignment:', err);
-      clubs[ci].assignments.push({ ...newItem });
+      alert('Failed to add assignment: ' + (err.message || err));
+      return;
     }
   }
   render();
 }
 
 function deleteRow(ci, ai) {
+  if (!requireEditor('delete assignments')) return;
   const a = clubs[ci].assignments[ai];
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -1118,6 +1245,7 @@ function deleteRow(ci, ai) {
 }
 
 async function confirmDelete(ci, ai, deleteFromAll) {
+  if (!requireEditor('delete assignments') || !requireDatabase('delete assignments')) return;
   const name = clubs[ci].assignments[ai].name;
   closeModal();
 
@@ -1125,32 +1253,41 @@ async function confirmDelete(ci, ai, deleteFromAll) {
     for (const c of clubs) {
       const idx = c.assignments.findIndex(a => a.name === name);
       if (idx !== -1) {
-        const removed = c.assignments.splice(idx, 1)[0];
+        const removed = c.assignments[idx];
         if (removed.dbId) {
           try {
-            await db.from('club_tracker_assignments').delete().eq('id', removed.dbId);
+            const { error } = await db.from('club_tracker_assignments').delete().eq('id', removed.dbId).select('id').single();
+            if (error) throw error;
           } catch (err) {
             console.error('Failed to delete assignment:', err);
+            alert('Failed to delete assignment: ' + (err.message || err));
+            return;
           }
         }
-        updateAssignmentPositions(c);
+        c.assignments.splice(idx, 1);
+        await updateAssignmentPositions(c);
       }
     }
   } else {
-    const removed = clubs[ci].assignments.splice(ai, 1)[0];
+    const removed = clubs[ci].assignments[ai];
     if (removed.dbId) {
       try {
-        await db.from('club_tracker_assignments').delete().eq('id', removed.dbId);
+        const { error } = await db.from('club_tracker_assignments').delete().eq('id', removed.dbId).select('id').single();
+        if (error) throw error;
       } catch (err) {
         console.error('Failed to delete assignment:', err);
+        alert('Failed to delete assignment: ' + (err.message || err));
+        return;
       }
     }
-    updateAssignmentPositions(clubs[ci]);
+    clubs[ci].assignments.splice(ai, 1);
+    await updateAssignmentPositions(clubs[ci]);
   }
   render();
 }
 
 function editRow(ci, ai) {
+  if (!requireEditor('edit assignments')) return;
   const a = clubs[ci].assignments[ai];
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -1158,11 +1295,11 @@ function editRow(ci, ai) {
     <div class="modal">
       <h3>Edit Assignment</h3>
       <label>Assignment Name</label>
-      <input type="text" id="modal-edit-name" value="${escapeHtml(a.name)}">
+      <input type="text" id="modal-edit-name" value="${escapeAttr(a.name)}">
       <label>Description</label>
-      <input type="text" id="modal-edit-desc" value="${escapeHtml(a.desc)}">
+      <input type="text" id="modal-edit-desc" value="${escapeAttr(a.desc)}">
       <label>Due Date</label>
-      <input type="date" id="modal-edit-due" value="${a.due && a.due !== 'Pre-launch' ? a.due : ''}">
+      <input type="date" id="modal-edit-due" value="${escapeAttr(dateInputValue(a.due))}" onkeydown="return false">
       <div class="modal-btns">
         <button class="btn-cancel" onclick="closeModal()">Cancel</button>
         <button class="btn-primary" onclick="confirmEdit(${ci},${ai},false)">This Club Only</button>
@@ -1175,6 +1312,7 @@ function editRow(ci, ai) {
 }
 
 async function confirmEdit(ci, ai, editAll) {
+  if (!requireEditor('edit assignments')) return;
   const origName = clubs[ci].assignments[ai].name;
   const newName = document.getElementById('modal-edit-name').value.trim() || origName;
   const newDesc = document.getElementById('modal-edit-desc').value.trim();
@@ -1186,49 +1324,31 @@ async function confirmEdit(ci, ai, editAll) {
     for (const c of clubs) {
       const match = c.assignments.find(a => a.name === origName);
       if (match) {
+        const prev = { name: match.name, desc: match.desc, due: match.due };
         match.name = newName;
         match.desc = newDesc;
         match.due = newDue;
-        saveAssignment(c.dbId, match);
+        const saved = await saveAssignment(c.dbId, match);
+        if (!saved) Object.assign(match, prev);
       }
     }
   } else {
     const a = clubs[ci].assignments[ai];
+    const prev = { name: a.name, desc: a.desc, due: a.due };
     a.name = newName;
     a.desc = newDesc;
     a.due = newDue;
-    saveAssignment(clubs[ci].dbId, a);
+    const saved = await saveAssignment(clubs[ci].dbId, a);
+    if (!saved) Object.assign(a, prev);
   }
   render();
 }
 
-function exportData() {
-  // Export a clean version without dbIds for portability
-  const exportClubs = clubs.map(c => ({
-    id: c.id,
-    name: c.name,
-    type: c.type,
-    materialsDate: c.materialsDate,
-    firstMeeting: c.firstMeeting,
-    assignments: c.assignments.map(a => ({
-      name: a.name,
-      desc: a.desc,
-      status: a.status,
-      rp: a.rp,
-      due: a.due,
-      done: a.done,
-      notes: a.notes
-    }))
-  }));
-  const blob = new Blob([JSON.stringify(exportClubs, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'av_clubs_tracker_backup.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
 async function importData(event) {
+  if (!requireEditor('import data') || !requireDatabase('import data')) {
+    event.target.value = '';
+    return;
+  }
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
@@ -1239,10 +1359,14 @@ async function importData(event) {
 
       // Delete all existing data in Supabase
       try {
-        await db.from('club_tracker_assignments').delete().neq('id', 0);
-        await db.from('club_tracker_clubs').delete().neq('id', 0);
+        let result = await db.from('club_tracker_assignments').delete().neq('id', 0);
+        if (result.error) throw result.error;
+        result = await db.from('club_tracker_clubs').delete().neq('id', 0);
+        if (result.error) throw result.error;
       } catch (err) {
         console.error('Failed to clear existing data:', err);
+        alert('Failed to clear existing data: ' + (err.message || err));
+        return;
       }
 
       // Insert imported data
@@ -1276,17 +1400,23 @@ async function importData(event) {
             notes: a.notes || ''
           }));
 
-          const { data: assignmentRows, error: assignErr } = await db
-            .from('club_tracker_assignments')
-            .insert(assignmentInserts)
-            .select();
-          if (assignErr) throw assignErr;
+          let assignmentRows = [];
+          if (assignmentInserts.length) {
+            const { data: insertedAssignments, error: assignErr } = await db
+              .from('club_tracker_assignments')
+              .insert(assignmentInserts)
+              .select();
+            if (assignErr) throw assignErr;
+            assignmentRows = insertedAssignments || [];
+          }
 
           const club = mapClubFromDb(clubRow);
-          club.assignments = (assignmentRows || []).map(mapAssignmentFromDb);
+          club.assignments = assignmentRows.map(mapAssignmentFromDb);
           result.push(club);
         } catch (err) {
           console.error('Failed to import club:', err);
+          alert('Failed to import club: ' + (err.message || err));
+          return;
         }
       }
 
@@ -1304,51 +1434,18 @@ async function importData(event) {
 document.getElementById('filterSelect').addEventListener('change', render);
 document.getElementById('clubFilter').addEventListener('change', render);
 
-// --- Auth ---
-const ALLOWED_EDITORS = ['mike@av.vc', 'emily@av.vc'];
-let currentUser = null;
-
 function isEditor() {
-  return currentUser && ALLOWED_EDITORS.includes((currentUser.email || '').toLowerCase());
+  return true;
 }
 
-function applyAuthState() {
-  const editor = isEditor();
-  document.body.classList.toggle('view-mode', !editor);
-  const pill = document.getElementById('authPill');
-  if (!pill) return;
-  if (currentUser) {
-    const email = currentUser.email || '';
-    const status = editor ? '✏️ Editor' : '👁 View only';
-    pill.innerHTML = `<span>${status}: ${escapeHtml(email)}</span><button onclick="signOut()">Sign out</button>`;
-  } else {
-    pill.innerHTML = `<span>👁 View only</span><button onclick="signIn()">Sign in to edit</button>`;
-  }
-  // Re-render so view-mode hides edit-only buttons inside #app
-  if (clubs && clubs.length) render();
-  refreshSuggestionsBadge();
+function requireEditor() {
+  return true;
 }
 
-async function signIn() {
-  const email = (prompt('Enter your email to receive a magic sign-in link:') || '').trim();
-  if (!email) return;
-  try {
-    const { error } = await db.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin + window.location.pathname }
-    });
-    if (error) throw error;
-    alert('Check your email for a sign-in link.');
-  } catch (err) {
-    console.error(err);
-    alert('Sign-in failed: ' + (err.message || err));
-  }
-}
-
-async function signOut() {
-  try { await db.auth.signOut(); } catch (e) { console.error(e); }
-  currentUser = null;
-  applyAuthState();
+function requireDatabase(action) {
+  if (db) return true;
+  alert(`No database connection. Cannot ${action}.`);
+  return false;
 }
 
 // --- App Initialization ---
@@ -1356,173 +1453,32 @@ async function signOut() {
   const app = document.getElementById('app');
   app.innerHTML = '<p style="text-align:center;padding:40px;color:var(--gray);">Loading data from server...</p>';
 
-  if (db && db.auth) {
-    try {
-      const { data: { session } } = await db.auth.getSession();
-      currentUser = session ? session.user : null;
-    } catch (e) { console.error(e); }
-    db.auth.onAuthStateChange((_event, session) => {
-      currentUser = session ? session.user : null;
-      applyAuthState();
-    });
-  }
-
   clubs = await loadData();
-  applyAuthState();
   render();
 })();
 
-// --- Suggestion Log ---
-function showSuggestModal() {
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.innerHTML = `
-    <div class="modal" style="max-width:460px;">
-      <h3>💡 Submit a Suggestion</h3>
-      <p style="font-size:0.82rem;color:var(--gray);margin:0 0 12px;">Bug, idea, or feedback — anything helps. Email is optional.</p>
-      <label>Category</label>
-      <select id="suggestCategory" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;margin-bottom:12px;">
-        <option value="idea">Idea / feature request</option>
-        <option value="bug">Bug</option>
-        <option value="content">Content / data correction</option>
-        <option value="other">Other</option>
-      </select>
-      <label>Your suggestion</label>
-      <textarea id="suggestBody" rows="5" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;font-family:inherit;margin-bottom:12px;" placeholder="What would make this tracker better?"></textarea>
-      <label>Your email (optional)</label>
-      <input type="text" id="suggestEmail" placeholder="you@av.vc">
-      <div class="modal-btns">
-        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
-        <button class="btn-primary" onclick="submitSuggestion()">Submit</button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', function(e) { if (e.target === overlay) closeModal(); });
-  setTimeout(() => { const t = document.getElementById('suggestBody'); if (t) t.focus(); }, 50);
-}
-
-async function submitSuggestion() {
-  const body = (document.getElementById('suggestBody').value || '').trim();
-  const category = document.getElementById('suggestCategory').value;
-  const email = (document.getElementById('suggestEmail').value || '').trim() || null;
-  if (!body) { alert('Please enter a suggestion.'); return; }
-  if (!db) { alert('Offline — cannot submit right now.'); return; }
-  try {
-    const { error } = await db.from('suggestions').insert({
-      body, category, author_email: email, status: 'new'
-    });
-    if (error) throw error;
-    closeModal();
-    alert('Thanks! Your suggestion was submitted.');
-    refreshSuggestionsBadge();
-  } catch (err) {
-    console.error(err);
-    alert('Submit failed: ' + (err.message || err) + '\n\nIf this is the first time, the suggestions table may not be set up yet — see README.');
-  }
-}
-
-async function showSuggestionsListModal() {
-  if (!db) { alert('Offline — cannot load suggestions.'); return; }
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.innerHTML = `
-    <div class="modal" style="max-width:720px;max-height:80vh;display:flex;flex-direction:column;">
-      <h3>Suggestions Log</h3>
-      <div id="suggestionsListBody" style="flex:1;overflow-y:auto;font-size:0.85rem;">Loading…</div>
-      <div class="modal-btns">
-        <button class="btn-cancel" onclick="closeModal()">Close</button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', function(e) { if (e.target === overlay) closeModal(); });
-  try {
-    const { data, error } = await db.from('suggestions').select('*').order('created_at', { ascending: false });
-    if (error) throw error;
-    const listEl = document.getElementById('suggestionsListBody');
-    if (!data || data.length === 0) {
-      listEl.innerHTML = '<p style="color:var(--gray);padding:20px 0;">No suggestions yet.</p>';
-      return;
-    }
-    listEl.innerHTML = data.map(s => {
-      const dt = new Date(s.created_at).toLocaleString();
-      const cat = escapeHtml(s.category || '—');
-      const email = s.author_email ? escapeHtml(s.author_email) : '<span style="color:var(--gray)">anonymous</span>';
-      const statusColor = s.status === 'done' ? 'var(--green)' : s.status === 'wontfix' ? 'var(--gray)' : s.status === 'triaged' ? 'var(--yellow)' : 'var(--accent)';
-      return `
-        <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
-          <div style="display:flex;gap:10px;align-items:center;font-size:0.78rem;color:var(--gray);margin-bottom:6px;">
-            <span style="font-weight:600;color:${statusColor};text-transform:uppercase;">${escapeHtml(s.status || 'new')}</span>
-            <span>·</span><span>${cat}</span>
-            <span>·</span><span>${dt}</span>
-            <span>·</span><span>${email}</span>
-            <span style="margin-left:auto;">
-              <select onchange="updateSuggestionStatus(${s.id}, this.value)" style="font-size:0.75rem;padding:2px 6px;border:1px solid var(--border);border-radius:4px;">
-                <option value="new" ${s.status==='new'?'selected':''}>new</option>
-                <option value="triaged" ${s.status==='triaged'?'selected':''}>triaged</option>
-                <option value="done" ${s.status==='done'?'selected':''}>done</option>
-                <option value="wontfix" ${s.status==='wontfix'?'selected':''}>wontfix</option>
-              </select>
-            </span>
-          </div>
-          <div style="white-space:pre-wrap;">${escapeHtml(s.body || '')}</div>
-        </div>`;
-    }).join('');
-  } catch (err) {
-    console.error(err);
-    document.getElementById('suggestionsListBody').innerHTML =
-      '<p style="color:var(--red);padding:20px 0;">Failed to load: ' + escapeHtml(err.message || String(err)) + '<br><br>If the table doesn\'t exist yet, see README.md for the SQL to create it.</p>';
-  }
-}
-
-async function updateSuggestionStatus(id, status) {
-  if (!db) return;
-  try {
-    const { error } = await db.from('suggestions').update({ status }).eq('id', id);
-    if (error) throw error;
-    refreshSuggestionsBadge();
-  } catch (err) {
-    console.error(err);
-    alert('Update failed: ' + (err.message || err));
-  }
-}
-
-async function refreshSuggestionsBadge() {
-  const badge = document.getElementById('suggestionsBadge');
-  if (!badge || !db || !isEditor()) { if (badge) badge.style.display = 'none'; return; }
-  try {
-    const { count, error } = await db.from('suggestions')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'new');
-    if (error) throw error;
-    if (count && count > 0) {
-      badge.textContent = count;
-      badge.style.display = 'inline-block';
-    } else {
-      badge.style.display = 'none';
-    }
-  } catch (err) {
-    // Table may not exist yet — silent fail
-    badge.style.display = 'none';
-  }
-}
-
 // --- PDF Report Generation ---
 let jspdfLoaded = false;
-function loadJsPDF() {
+function loadScript(src) {
   return new Promise((resolve, reject) => {
-    if (jspdfLoaded) return resolve();
-    const s1 = document.createElement('script');
-    s1.src = './lib/jspdf.umd.min.js';
-    s1.onload = () => {
-      const s2 = document.createElement('script');
-      s2.src = './lib/jspdf.plugin.autotable.min.js';
-      s2.onload = () => { jspdfLoaded = true; resolve(); };
-      s2.onerror = reject;
-      document.head.appendChild(s2);
-    };
-    s1.onerror = reject;
-    document.head.appendChild(s1);
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
   });
+}
+
+async function loadJsPDF() {
+  if (jspdfLoaded) return;
+  try {
+    await loadScript('./lib/jspdf.umd.min.js');
+    await loadScript('./lib/jspdf.plugin.autotable.min.js');
+  } catch (localErr) {
+    await loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+    await loadScript('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js');
+  }
+  jspdfLoaded = true;
 }
 
 function showReportModal() {
@@ -1532,7 +1488,7 @@ function showReportModal() {
     <label style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f1f5f9;">
       <input type="checkbox" checked data-club-idx="${i}" style="width:auto;accent-color:var(--accent);">
       <span style="font-weight:600">#${c.id}</span> ${escapeHtml(c.name)}
-      <span style="margin-left:auto;font-size:0.8rem;color:var(--gray)">${c.type}</span>
+      <span style="margin-left:auto;font-size:0.8rem;color:var(--gray)">${escapeHtml(c.type)}</span>
     </label>`).join('');
   overlay.innerHTML = `
     <div class="modal" style="max-width:480px;">
@@ -1565,7 +1521,7 @@ async function generatePDF(selectedIndices) {
   try {
     await loadJsPDF();
   } catch(e) {
-    alert('Failed to load PDF library. Ensure the lib/ folder contains jspdf.umd.min.js and jspdf.plugin.autotable.min.js');
+    alert('Failed to load PDF library. Check your connection or add jspdf.umd.min.js and jspdf.plugin.autotable.min.js to the lib/ folder.');
     return;
   }
 

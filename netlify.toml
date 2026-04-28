@@ -7,7 +7,8 @@ redirects = []
   [functions."*"]
 
 [build]
-publish = "/Users/mikecollins/Desktop/Repos/Club Rollout checklist"
+command = "node scripts/generate-env-config.mjs"
+publish = "."
 publishOrigin = "config"
 
   [build.environment]

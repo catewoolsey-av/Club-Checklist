@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "dev": "node scripts/generate-env-config.mjs && node scripts/dev-server.mjs"
+  }
+}
+
