@@ -396,8 +396,7 @@ function mapClubFromDb(row) {
 
 async function loadData() {
   if (!db) {
-    console.warn('No Supabase connection — loading defaults');
-    return JSON.parse(JSON.stringify(DEFAULT_CLUBS));
+    throw new Error('Supabase config missing. Set SUPABASE_URL and SUPABASE_ANON_KEY in Netlify environment variables, then redeploy.');
   }
   try {
     const { data: clubRows, error: clubErr } = await db
@@ -436,8 +435,8 @@ async function loadData() {
     archivedClubs = all.filter(c => c._archived);
     return active;
   } catch (err) {
-    console.error('Failed to load from Supabase, using defaults:', err);
-    return JSON.parse(JSON.stringify(DEFAULT_CLUBS));
+    console.error('Failed to load from Supabase:', err);
+    throw err;
   }
 }
 
@@ -1453,8 +1452,12 @@ function requireDatabase(action) {
   const app = document.getElementById('app');
   app.innerHTML = '<p style="text-align:center;padding:40px;color:var(--gray);">Loading data from server...</p>';
 
-  clubs = await loadData();
-  render();
+  try {
+    clubs = await loadData();
+    render();
+  } catch (err) {
+    app.innerHTML = `<p style="text-align:center;padding:40px;color:var(--red);">Failed to load Supabase data: ${escapeHtml(err.message || String(err))}</p>`;
+  }
 })();
 
 // --- PDF Report Generation ---
