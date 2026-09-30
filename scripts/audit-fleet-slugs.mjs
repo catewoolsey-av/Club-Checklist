@@ -6,6 +6,17 @@
 // club, or periodically across the whole fleet, to catch it early instead
 // of discovering it in production.
 //
+// 2026-09-30 update: also catches a second, separate identity surface —
+// the real Netlify SITE's own dashboard env vars (SUPABASE_URL etc.),
+// which are independent of the repo's .env.local and were found wrong
+// fleet-wide (every checked site had LockerRoom's own DB credentials
+// baked in as a leftover scaffold default from site creation, never
+// filled in per-club). Netlify Functions read these live at invocation,
+// so a wrong value here isn't just a future risk — it can mean a site's
+// server-side functions are ALREADY silently hitting the wrong database.
+// See the club-portal-fleet / verify-cloned-club-identity memory for the
+// 2026-09-30 incident this check came out of.
+//
 // What it checks, per repo under a given base directory (has src/supabase.js + .env.local):
 //   1. SB2_CLUB_SLUG (hardcoded const in src/supabase.js) exists in the
 //      shared SB2 `clubs` table.
@@ -13,10 +24,21 @@
 //      `netlify sites:list --json`), and no two repos share the same siteId.
 //   3. Welcome text / fallback club-name strings in MemberLogin.jsx and
 //      AdminDealInterests.jsx don't obviously belong to a different club.
+//   4. The linked Netlify SITE's own dashboard SUPABASE_URL matches this
+//      repo's local .env.local SUPABASE_URL (via `netlify env:get`).
 //
 // Requires: SB2_URL + SB2_SERVICE_ROLE_KEY env vars (from any club's own
 // .env.local — SB2 is shared fleet-wide), and `netlify` CLI logged in
 // (`netlify login`) with access to the account these sites belong to.
+//
+// CAVEAT on check 4: `netlify env:get`/`env:list` was observed giving
+// inconsistent results when read immediately after writes in the same
+// session (2026-09-30) — for a COLD read (no recent env:set calls) it
+// appears reliable, but if this check flags something, confirm with a
+// live-behavior test (e.g. trigger a real function call and see which
+// database it actually writes to) before trusting the flag OR trusting
+// a fix. Don't treat this check's "OK" as fully conclusive either —
+// it's a candidate finder, same as every other check here.
 //
 // Usage:
 //   SB2_URL=https://xxx.supabase.co SB2_SERVICE_ROLE_KEY=xxx \
@@ -56,7 +78,15 @@ const local = repos.map(repo => {
   try { siteId = netlifyState ? JSON.parse(netlifyState).siteId : null; } catch {}
   const memberLogin = readSafe(path.join(p, 'src/components/auth/MemberLogin.jsx')) || '';
   const welcomeMatch = memberLogin.match(/Welcome to the<br \/>([^<]*)</);
-  return { repo, slug: slugMatch?.[1] || null, siteId, welcome: welcomeMatch?.[1] || null };
+  const envLocal = readSafe(path.join(p, '.env.local')) || '';
+  const supabaseUrlMatch = envLocal.match(/^SUPABASE_URL=(.*)$/m);
+  return {
+    repo,
+    slug: slugMatch?.[1] || null,
+    siteId,
+    welcome: welcomeMatch?.[1] || null,
+    localSupabaseUrl: supabaseUrlMatch?.[1]?.trim() || null,
+  };
 });
 
 // 3. Ground truth: SB2 clubs table
@@ -103,6 +133,36 @@ if (sites.length) {
     const name = siteById.get(siteId);
     if (!name) console.log(`  ${repo}: siteId not found in sites:list at all -- ${siteId}`);
     else console.log(`  ${repo.padEnd(24)} -> ${name}`);
+  });
+}
+
+// Check 4: the real Netlify site's own SUPABASE_URL vs this repo's local .env.local
+if (sites.length) {
+  console.log('\n=== Netlify site SUPABASE_URL vs local .env.local (deployed Functions read the SITE value, not your local file) ===');
+  local.forEach(({ repo, siteId, localSupabaseUrl }) => {
+    if (!siteId || !localSupabaseUrl) return;
+    if (!siteById.has(siteId)) return; // already flagged above
+    let deployedUrl = null;
+    try {
+      // cwd MUST be a directory with its own linked .netlify/state.json —
+      // running from a dir with no linked project (e.g. the fleet base
+      // dir) makes `env:get` fall back to an interactive site picker and
+      // hang forever, even with --site passed explicitly (CLI quirk,
+      // found 2026-09-30). stdin is ignored as a second guard against
+      // ever hanging on a prompt in a non-interactive run.
+      const out = execSync(`netlify env:get SUPABASE_URL --site "${siteId}" --json`, {
+        cwd: path.join(baseDir, repo),
+        stdio: ['ignore', 'pipe', 'pipe'],
+        maxBuffer: 1024 * 1024 * 10,
+      }).toString();
+      deployedUrl = JSON.parse(out).SUPABASE_URL || null;
+    } catch (e) {
+      console.log(`  ${repo}: could not read site env var (${e.message.split('\n')[0]})`);
+      return;
+    }
+    if (deployedUrl !== localSupabaseUrl) {
+      console.log(`  ${repo}: MISMATCH — site has "${deployedUrl}", local .env.local has "${localSupabaseUrl}"`);
+    }
   });
 }
 
