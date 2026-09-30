@@ -31,14 +31,43 @@
 // .env.local — SB2 is shared fleet-wide), and `netlify` CLI logged in
 // (`netlify login`) with access to the account these sites belong to.
 //
-// CAVEAT on check 4: `netlify env:get`/`env:list` was observed giving
-// inconsistent results when read immediately after writes in the same
-// session (2026-09-30) — for a COLD read (no recent env:set calls) it
-// appears reliable, but if this check flags something, confirm with a
-// live-behavior test (e.g. trigger a real function call and see which
-// database it actually writes to) before trusting the flag OR trusting
-// a fix. Don't treat this check's "OK" as fully conclusive either —
-// it's a candidate finder, same as every other check here.
+// CAVEAT on check 4: `netlify env:get`/`env:list`/`env:set` were all
+// observed being flaky in this session (2026-09-30) — calls can hang
+// indefinitely (confirmed via `ps aux`, alive with ~0% CPU for minutes)
+// even with `--force` and stdin redirected to /dev/null, and even a
+// subprocess-level timeout didn't reliably kill the hang (needed
+// `pkill -9 -f "netlify env:set"` by hand). Retrying the exact same call
+// right after killing a hung one often just works — this looks like
+// transient Netlify-API-side flakiness, not a deterministic per-call bug.
+// So: don't treat one hang as proof something is broken, and don't treat
+// this check's "OK" as fully conclusive either — it's a candidate finder,
+// same as every other check here. If this check flags something, confirm
+// with a live-behavior test (trigger a real function call that writes to
+// the DB, e.g. request-password-reset, and check which project's table
+// actually got the row) before trusting the flag OR trusting a fix.
+//
+// HOW TO ACTUALLY FIX A FLAGGED SITE ENV VAR (2026-09-30 incident — do
+// NOT skip any of these steps, each one was independently necessary):
+//   1. Set it with EXPLICIT context names, never the word "all":
+//        netlify env:set KEY value --site <id> --force \
+//          --context production deploy-preview branch-deploy dev
+//      `all` is NOT a valid --context value (real ones: production,
+//      deploy-preview, branch-deploy, dev, branch:<name>) — it's only
+//      the unstated default when --context is omitted. Passing the
+//      literal string "all" doesn't error, it just silently doesn't do
+//      what you'd assume, which is exactly how this went unnoticed
+//      across 6 sites before a live user hit "Invalid API key" on one.
+//   2. Wrap every env:set call in a retry loop (~20s timeout, 2-3
+//      retries) per the flakiness caveat above.
+//   3. After the vars are confirmed set, trigger a fresh deploy:
+//        netlify api createSiteBuild --data '{"site_id":"<id>"}'
+//      and poll listSiteDeploys until state is "ready". Netlify
+//      Functions do NOT reliably pick up a corrected env var without
+//      this — a site can have perfectly correct env vars sitting in its
+//      dashboard while its live functions keep using the old ones from
+//      the last build. This was the actual reason one site's fix
+//      silently didn't take even after being set correctly twice.
+//   4. Re-verify with the live-behavior test, not with env:get/env:list.
 //
 // Usage:
 //   SB2_URL=https://xxx.supabase.co SB2_SERVICE_ROLE_KEY=xxx \
